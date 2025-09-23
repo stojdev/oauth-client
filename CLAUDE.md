@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## The Number ONE rule that cannot, ever, be broken: Frequently run the pnpm quality-gate command to ensure code quality and consistency
+
+There are NO, NONE, ZERO exceptions to this rule. Code that does not pass the quality gate is dead code and MUST be fixed or DELETED.
+
 ## Project Overview
 
 This is an OAuth 2.0 test client for testing and verifying Access Token retrieval from OAuth providers. The project is in early development phase with the core implementation yet to be built.
@@ -16,6 +20,7 @@ This is an OAuth 2.0 test client for testing and verifying Access Token retrieva
 ## Commands
 
 ### Development Commands
+
 ```bash
 # Install dependencies
 pnpm install
@@ -63,7 +68,7 @@ The client will implement all standard OAuth 2.0 grant types:
 
 ## Implementation Structure (Planned)
 
-```
+```plain
 src/
 ├── core/           # Core OAuth client logic
 ├── grants/         # Grant type implementations
@@ -76,16 +81,22 @@ src/
 ## Key Implementation Considerations
 
 ### Security Features
+
 - PKCE (Proof Key for Code Exchange) support for Authorization Code flow
-- Secure token storage mechanism
+- Secure token storage mechanism with AES-256-GCM encryption
+- Environment-based encryption key management (TOKEN_ENCRYPTION_KEY)
+- Key derivation function (KDF) support for password-based keys
 - Comprehensive error handling for OAuth errors
 
 ### Configuration
+
 - Support for multiple OAuth providers
 - Configuration via JSON/YAML files
 - Environment variable support for sensitive credentials
+- **IMPORTANT**: Set TOKEN_ENCRYPTION_KEY environment variable for production deployments
 
 ### Testing Requirements
+
 - Unit tests for each grant type
 - Integration tests with mock OAuth servers
 - CLI command testing
@@ -93,6 +104,7 @@ src/
 ## Current Status
 
 The project is in initial setup phase. The following need to be implemented:
+
 - TypeScript configuration
 - Core OAuth client class
 - Grant type implementations
