@@ -256,6 +256,174 @@
       "documentationUrl": "https://api.slack.com/authentication/oauth-v2",
       "setupInstructions": "1. Create Slack app\n2. Add OAuth & Permissions\n3. Add redirect URLs\n4. Configure scopes\n5. Copy Client ID and Secret",
       "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "servicenow": {
+      "id": "servicenow",
+      "name": "ServiceNow",
+      "description": "ServiceNow OAuth 2.0 implementation",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://{instance}.service-now.com/oauth_auth.do",
+      "tokenUrl": "https://{instance}.service-now.com/oauth_token.do",
+      "revocationUrl": "https://{instance}.service-now.com/oauth_revoke_token.do",
+      "userInfoUrl": "https://{instance}.service-now.com/api/now/table/sys_user/{user_id}",
+      "supportedGrantTypes": ["authorization_code", "password", "refresh_token", "client_credentials"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": false,
+        "methods": ["S256"]
+      },
+      "scope": "useraccount",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://docs.servicenow.com/bundle/utah-platform-security/page/administer/security/concept/c_OAuthApplications.html",
+      "setupInstructions": "1. Log in to ServiceNow instance as admin\n2. Navigate to System OAuth > Application Registry\n3. Click New > Create an OAuth API endpoint\n4. Configure OAuth settings\n5. Note Client ID and Client Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri", "instance"],
+      "additionalSettings": {
+        "instance": "dev12345"
+      }
+    },
+    "salesforce": {
+      "id": "salesforce",
+      "name": "Salesforce",
+      "description": "Salesforce OAuth 2.0 and OpenID Connect",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://login.salesforce.com/services/oauth2/authorize",
+      "tokenUrl": "https://login.salesforce.com/services/oauth2/token",
+      "revocationUrl": "https://login.salesforce.com/services/oauth2/revoke",
+      "introspectionUrl": "https://login.salesforce.com/services/oauth2/introspect",
+      "userInfoUrl": "https://login.salesforce.com/services/oauth2/userinfo",
+      "jwksUri": "https://login.salesforce.com/id/keys",
+      "discoveryUrl": "https://login.salesforce.com/.well-known/openid-configuration",
+      "supportedGrantTypes": ["authorization_code", "password", "refresh_token", "client_credentials", "urn:ietf:params:oauth:grant-type:device_code"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid profile email refresh_token",
+      "responseType": "code",
+      "responseMode": "query",
+      "customAuthParams": {
+        "prompt": "consent"
+      },
+      "documentationUrl": "https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm",
+      "setupInstructions": "1. Log in to Salesforce\n2. Setup > Apps > App Manager\n3. New Connected App\n4. Enable OAuth Settings\n5. Configure callback URL and scopes\n6. Save and note Consumer Key and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "discord": {
+      "id": "discord",
+      "name": "Discord",
+      "description": "Discord OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://discord.com/api/oauth2/authorize",
+      "tokenUrl": "https://discord.com/api/oauth2/token",
+      "revocationUrl": "https://discord.com/api/oauth2/token/revoke",
+      "userInfoUrl": "https://discord.com/api/users/@me",
+      "supportedGrantTypes": ["authorization_code", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false,
+        "methods": ["S256"]
+      },
+      "scope": "identify email",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://discord.com/developers/docs/topics/oauth2",
+      "setupInstructions": "1. Go to Discord Developer Portal\n2. Create New Application\n3. Go to OAuth2 section\n4. Add redirect URLs\n5. Copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "spotify": {
+      "id": "spotify",
+      "name": "Spotify",
+      "description": "Spotify Web API OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://accounts.spotify.com/authorize",
+      "tokenUrl": "https://accounts.spotify.com/api/token",
+      "userInfoUrl": "https://api.spotify.com/v1/me",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "user-read-email user-read-private",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://developer.spotify.com/documentation/general/guides/authorization/",
+      "setupInstructions": "1. Go to Spotify Dashboard\n2. Create an app\n3. Add redirect URIs\n4. Note Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "dropbox": {
+      "id": "dropbox",
+      "name": "Dropbox",
+      "description": "Dropbox OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://www.dropbox.com/oauth2/authorize",
+      "tokenUrl": "https://api.dropboxapi.com/oauth2/token",
+      "revocationUrl": "https://api.dropboxapi.com/2/auth/token/revoke",
+      "userInfoUrl": "https://api.dropboxapi.com/2/users/get_current_account",
+      "supportedGrantTypes": ["authorization_code", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "account_info.read",
+      "responseType": "code",
+      "responseMode": "query",
+      "customAuthParams": {
+        "token_access_type": "offline"
+      },
+      "documentationUrl": "https://www.dropbox.com/developers/documentation/http/documentation#oauth2",
+      "setupInstructions": "1. Go to Dropbox App Console\n2. Create new app\n3. Configure OAuth 2 settings\n4. Add redirect URIs\n5. Note App key and App secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "gitlab": {
+      "id": "gitlab",
+      "name": "GitLab",
+      "description": "GitLab OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://gitlab.com/oauth/authorize",
+      "tokenUrl": "https://gitlab.com/oauth/token",
+      "revocationUrl": "https://gitlab.com/oauth/revoke",
+      "userInfoUrl": "https://gitlab.com/api/v4/user",
+      "supportedGrantTypes": ["authorization_code", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "read_user openid profile email",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://docs.gitlab.com/ee/api/oauth2.html",
+      "setupInstructions": "1. Go to GitLab Applications\n2. Create new application\n3. Set redirect URI\n4. Select scopes\n5. Save and note Application ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "twitch": {
+      "id": "twitch",
+      "name": "Twitch",
+      "description": "Twitch OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://id.twitch.tv/oauth2/authorize",
+      "tokenUrl": "https://id.twitch.tv/oauth2/token",
+      "revocationUrl": "https://id.twitch.tv/oauth2/revoke",
+      "userInfoUrl": "https://api.twitch.tv/helix/users",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false,
+        "methods": ["S256"]
+      },
+      "scope": "user:read:email",
+      "responseType": "code",
+      "responseMode": "query",
+      "customHeaders": {
+        "Client-ID": "{clientId}"
+      },
+      "documentationUrl": "https://dev.twitch.tv/docs/authentication/",
+      "setupInstructions": "1. Go to Twitch Developer Console\n2. Register your application\n3. Set OAuth Redirect URLs\n4. Note Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
     }
   }
 }

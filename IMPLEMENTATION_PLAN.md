@@ -166,23 +166,30 @@ src/
 ## Phase 5: Provider Support (Week 5)
 
 ### 5.1 Provider Templates
-- [ ] ServiceNow
-- [ ] Google OAuth 2.0
-- [ ] Microsoft Identity Platform
-- [ ] GitHub OAuth
-- [ ] Auth0
-- [ ] Okta
-- [ ] AWS Cognito
-- [ ] Keycloak
-- [ ] Facebook
-- [ ] LinkedIn
-- [ ] Custom provider support
+- [x] ServiceNow
+- [x] Google OAuth 2.0
+- [x] Microsoft Identity Platform
+- [x] GitHub OAuth
+- [x] Auth0
+- [x] Okta
+- [x] AWS Cognito
+- [x] Keycloak
+- [x] Facebook
+- [x] LinkedIn
+- [x] Salesforce
+- [x] Discord
+- [x] Spotify
+- [x] Dropbox
+- [x] GitLab
+- [x] Twitch
+- [x] Slack
+- [x] Custom provider support
 
 ### 5.2 Provider Discovery
-- [ ] Implement OpenID Connect Discovery
-- [ ] Add OAuth 2.0 metadata support (RFC 8414)
-- [ ] Cache discovery documents
-- [ ] Auto-configure from discovery
+- [x] Implement OpenID Connect Discovery
+- [x] Add OAuth 2.0 metadata support (RFC 8414)
+- [x] Cache discovery documents
+- [x] Auto-configure from discovery
 
 ## Phase 6: Testing Framework (Week 6)
 

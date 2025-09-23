@@ -161,9 +161,13 @@ export async function authCommand(
       }
 
       // Offer to copy token to clipboard
-      const { ClipboardManager } = await import('../../utils/Clipboard.js');
-      console.log();
-      await ClipboardManager.copyToken(token.access_token, 'Access token');
+      try {
+        const { ClipboardManager } = await import('../../utils/Clipboard.js');
+        console.log();
+        await ClipboardManager.copyToken(token.access_token, 'Access token');
+      } catch {
+        // Clipboard not available
+      }
     }
 
     // Save token if requested

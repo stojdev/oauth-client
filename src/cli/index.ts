@@ -112,6 +112,28 @@ program
   .option('-f, --file <path>', 'Configuration file path')
   .action(configListCommand);
 
+// Discover command
+program
+  .command('discover <issuer-url>')
+  .description('Discover OAuth configuration from issuer URL')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .option('-s, --save <file>', 'Save configuration to file')
+  .option('-i, --interactive', 'Interactive mode')
+  .action(async (issuerUrl, options) => {
+    const { discoverCommand } = await import('./commands/discover.js');
+    await discoverCommand(issuerUrl, options);
+  });
+
+// Test discovery command
+program
+  .command('discover:test')
+  .description('Test discovery support for common providers')
+  .action(async () => {
+    const { testDiscoveryCommand } = await import('./commands/discover.js');
+    await testDiscoveryCommand();
+  });
+
 // Test command (comprehensive testing)
 program
   .command('test <provider>')

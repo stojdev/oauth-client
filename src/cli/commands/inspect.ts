@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { JWTDecoder } from '../../utils/JWTDecoder.js';
 import tokenManager from '../../core/TokenManager.js';
-import { ClipboardManager } from '../../utils/Clipboard.js';
 
 /**
  * Inspect and decode a token
@@ -53,9 +52,14 @@ export async function inspectCommand(
     // Offer to copy decoded payload to clipboard
     const decoded = JWTDecoder.decode(tokenToInspect);
     if (decoded) {
-      console.log();
-      const payloadString = JSON.stringify(decoded.payload, null, 2);
-      await ClipboardManager.copyWithFeedback(payloadString, 'Decoded JWT payload');
+      try {
+        const { ClipboardManager } = await import('../../utils/Clipboard.js');
+        console.log();
+        const payloadString = JSON.stringify(decoded.payload, null, 2);
+        await ClipboardManager.copyWithFeedback(payloadString, 'Decoded JWT payload');
+      } catch {
+        // Clipboard not available
+      }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
