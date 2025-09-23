@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { TokenManager } from './TokenManager';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -15,10 +16,6 @@ jest.mock('../utils/Logger.js', () => ({
 
 // Mock fs to avoid file system operations during tests
 jest.mock('fs');
-jest.mock('os');
-
-const mockFs = fs as jest.Mocked<typeof fs>;
-const mockOs = os as jest.Mocked<typeof os>;
 
 describe('TokenManager', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -27,7 +24,8 @@ describe('TokenManager', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     tempDir = '/tmp/test-oauth-client';
-    mockOs.homedir.mockReturnValue('/tmp');
+    // Mock os.homedir
+    jest.spyOn(os, 'homedir').mockReturnValue('/tmp');
 
     // Clear the environment variable
     delete process.env.TOKEN_ENCRYPTION_KEY;
@@ -47,7 +45,7 @@ describe('TokenManager', () => {
       process.env.TOKEN_ENCRYPTION_KEY = testKey;
 
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -59,7 +57,7 @@ describe('TokenManager', () => {
       process.env.TOKEN_ENCRYPTION_KEY = testKey;
 
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -70,7 +68,7 @@ describe('TokenManager', () => {
       process.env.TOKEN_ENCRYPTION_KEY = 'kdf:test-password-123';
 
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -81,7 +79,7 @@ describe('TokenManager', () => {
       process.env.TOKEN_ENCRYPTION_KEY = 'short-key';
 
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -90,44 +88,43 @@ describe('TokenManager', () => {
 
     it('should generate new key when no env var and no file', () => {
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
       // Mock file system operations
-      mockFs.mkdirSync.mockImplementation(() => undefined);
-      mockFs.writeFileSync.mockImplementation(() => undefined);
+      jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined as never);
+      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       expect(() => new TokenManager(tempDir)).not.toThrow();
-      expect(mockFs.mkdirSync).toHaveBeenCalled();
-      expect(mockFs.writeFileSync).toHaveBeenCalled();
+      expect(fs.mkdirSync).toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalled();
     });
 
     it('should use existing key file when available', () => {
       const testKey = crypto.randomBytes(32);
 
       // Mock that file exists and returns valid key
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mockFs.readFileSync as any).mockReturnValue(testKey);
+      jest.spyOn(fs, 'readFileSync').mockReturnValue(testKey as never);
 
       expect(() => new TokenManager(tempDir)).not.toThrow();
-      expect(mockFs.readFileSync).toHaveBeenCalled();
+      expect(fs.readFileSync).toHaveBeenCalled();
     });
 
     it('should warn in production when auto-generating key', () => {
       process.env.NODE_ENV = 'production';
 
       // Mock console.warn to capture warnings
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
       // Mock that no file exists
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
       // Mock file system operations
-      mockFs.mkdirSync.mockImplementation(() => undefined);
-      mockFs.writeFileSync.mockImplementation(() => undefined);
+      jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined as never);
+      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       new TokenManager(tempDir);
 
@@ -145,7 +142,7 @@ describe('TokenManager', () => {
       const testKey = crypto.randomBytes(32).toString('hex');
       process.env.TOKEN_ENCRYPTION_KEY = testKey;
 
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -156,7 +153,7 @@ describe('TokenManager', () => {
       const testKey = crypto.randomBytes(32).toString('base64');
       process.env.TOKEN_ENCRYPTION_KEY = testKey;
 
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -166,7 +163,7 @@ describe('TokenManager', () => {
     it('should reject invalid hex format', () => {
       process.env.TOKEN_ENCRYPTION_KEY = 'invalid-hex-key';
 
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -177,7 +174,7 @@ describe('TokenManager', () => {
       const shortKey = crypto.randomBytes(16).toString('hex'); // 16 bytes
       process.env.TOKEN_ENCRYPTION_KEY = shortKey;
 
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -189,7 +186,7 @@ describe('TokenManager', () => {
     it('should derive consistent keys from same password', () => {
       process.env.TOKEN_ENCRYPTION_KEY = 'kdf:test-password';
 
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
 
@@ -207,7 +204,7 @@ describe('TokenManager', () => {
       // but we can ensure both work without errors
 
       process.env.TOKEN_ENCRYPTION_KEY = 'kdf:password1';
-      mockFs.readFileSync.mockImplementation(() => {
+      jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
         throw new Error('File not found');
       });
       const manager1 = new TokenManager(tempDir);

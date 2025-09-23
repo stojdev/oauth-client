@@ -32,7 +32,7 @@ export async function tokenCommand(
   },
 ): Promise<void> {
   try {
-    console.log(chalk.blue(`Requesting token using ${grantType} grant...`));
+    logger.info(chalk.blue(`Requesting token using ${grantType} grant...`));
 
     let token: TokenResponse;
 
@@ -169,28 +169,28 @@ export async function tokenCommand(
 
     // Display token
     if (options.output === 'json') {
-      console.log(JSON.stringify(token, null, 2));
+      logger.info(JSON.stringify(token, null, 2));
     } else {
-      console.log(chalk.green('✓ Successfully obtained token!'));
-      console.log(chalk.gray('Token Type:'), token.token_type);
-      console.log(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
+      logger.info(chalk.green('✓ Successfully obtained token!'));
+      logger.info(chalk.gray('Token Type:'), token.token_type);
+      logger.info(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
 
       if (token.expires_in) {
-        console.log(chalk.gray('Expires In:'), token.expires_in, 'seconds');
+        logger.info(chalk.gray('Expires In:'), token.expires_in, 'seconds');
       }
 
       if (token.scope) {
-        console.log(chalk.gray('Scope:'), token.scope);
+        logger.info(chalk.gray('Scope:'), token.scope);
       }
 
       if (token.refresh_token) {
-        console.log(chalk.gray('Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
+        logger.info(chalk.gray('Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
       }
 
       // Offer to copy token to clipboard
       try {
         const { ClipboardManager } = await import('../../utils/Clipboard.js');
-        console.log();
+        logger.info('');
         await ClipboardManager.copyToken(token.access_token, 'Access token');
       } catch {
         // Clipboard not available
@@ -200,12 +200,12 @@ export async function tokenCommand(
     // Save token if requested
     if (options.save) {
       await tokenManager.storeToken(options.save, token);
-      console.log(chalk.green(`✓ Token saved as '${options.save}'`));
+      logger.info(chalk.green(`✓ Token saved as '${options.save}'`));
     }
   } catch (error) {
     logger.error('Token request failed', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Token request failed:'), errorMessage);
+    logger.error(chalk.red('✗ Token request failed:'), errorMessage);
     process.exit(1);
   }
 }

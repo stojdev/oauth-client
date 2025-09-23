@@ -133,22 +133,21 @@ export class DeviceAuthorizationGrant extends OAuthClient {
         this.config.onUserCode(deviceResponse);
       } else {
         // Default display
-        // eslint-disable-next-line no-console
-        console.log('\n========================================');
-        // eslint-disable-next-line no-console
-        console.log('  DEVICE AUTHORIZATION');
-        // eslint-disable-next-line no-console
-        console.log('========================================');
-        // eslint-disable-next-line no-console
-        console.log(`  1. Visit: ${deviceResponse.verification_uri}`);
-        // eslint-disable-next-line no-console
-        console.log(`  2. Enter code: ${deviceResponse.user_code}`);
+
+        logger.info('\n========================================');
+
+        logger.info('  DEVICE AUTHORIZATION');
+
+        logger.info('========================================');
+
+        logger.info(`  1. Visit: ${deviceResponse.verification_uri}`);
+
+        logger.info(`  2. Enter code: ${deviceResponse.user_code}`);
         if (deviceResponse.verification_uri_complete) {
-          // eslint-disable-next-line no-console
-          console.log(`\n  Or visit: ${deviceResponse.verification_uri_complete}`);
+          logger.info(`\n  Or visit: ${deviceResponse.verification_uri_complete}`);
         }
-        // eslint-disable-next-line no-console
-        console.log('========================================\n');
+
+        logger.info('========================================\n');
       }
 
       logger.info('Polling for authorization...');

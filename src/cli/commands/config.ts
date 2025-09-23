@@ -3,6 +3,7 @@ import { ConfigLoader } from '../../config/ConfigLoader.js';
 import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
 import type { ProviderConfig } from '../../config/schema.js';
 import inquirer from 'inquirer';
+import { logger } from '../../utils/Logger.js';
 
 /**
  * Initialize configuration file
@@ -12,7 +13,7 @@ export async function configInitCommand(options?: {
   interactive?: boolean;
 }): Promise<void> {
   try {
-    console.log(chalk.blue('Initializing OAuth configuration...'));
+    logger.info(chalk.blue('Initializing OAuth configuration...'));
 
     const configLoader = new ConfigLoader();
     const providerManager = new ProviderConfigManager();
@@ -55,15 +56,15 @@ export async function configInitCommand(options?: {
       configLoader.addProvider(config);
     } else {
       // Create basic configuration
-      console.log(chalk.yellow('Creating basic configuration...'));
-      console.log(chalk.gray('Run with --interactive for guided setup'));
+      logger.info(chalk.yellow('Creating basic configuration...'));
+      logger.info(chalk.gray('Run with --interactive for guided setup'));
     }
 
     await configLoader.save(options?.file);
-    console.log(chalk.green('✓ Configuration initialized successfully'));
+    logger.info(chalk.green('✓ Configuration initialized successfully'));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Failed to initialize configuration:'), errorMessage);
+    logger.error(chalk.red('✗ Failed to initialize configuration:'), errorMessage);
     process.exit(1);
   }
 }
@@ -83,7 +84,7 @@ export async function configAddCommand(
   },
 ): Promise<void> {
   try {
-    console.log(chalk.blue(`Adding provider '${provider}' to configuration...`));
+    logger.info(chalk.blue(`Adding provider '${provider}' to configuration...`));
 
     const configLoader = new ConfigLoader();
     const providerManager = new ProviderConfigManager();
@@ -176,10 +177,10 @@ export async function configAddCommand(
     configLoader.addProvider(config);
     await configLoader.save(options?.file);
 
-    console.log(chalk.green(`✓ Provider '${provider}' added successfully`));
+    logger.info(chalk.green(`✓ Provider '${provider}' added successfully`));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Failed to add provider:'), errorMessage);
+    logger.error(chalk.red('✗ Failed to add provider:'), errorMessage);
     process.exit(1);
   }
 }
@@ -196,34 +197,34 @@ export async function configListCommand(options?: { file?: string }): Promise<vo
     const providerManager = new ProviderConfigManager();
 
     if (providers.length === 0) {
-      console.log(chalk.yellow('No providers configured'));
-      console.log(chalk.gray('Available presets:'), providerManager.listProviderIds().join(', '));
+      logger.info(chalk.yellow('No providers configured'));
+      logger.info(chalk.gray('Available presets:'), providerManager.listProviderIds().join(', '));
       return;
     }
 
-    console.log(chalk.blue('Configured providers:'));
+    logger.info(chalk.blue('Configured providers:'));
     providers.forEach((provider) => {
-      console.log(`\n${chalk.green(provider.name)} (${provider.id})`);
-      console.log(chalk.gray('  Client ID:'), provider.clientId);
-      console.log(chalk.gray('  Token URL:'), provider.tokenUrl);
+      logger.info(`\n${chalk.green(provider.name)} (${provider.id})`);
+      logger.info(chalk.gray('  Client ID:'), provider.clientId);
+      logger.info(chalk.gray('  Token URL:'), provider.tokenUrl);
       if (provider.authorizationUrl) {
-        console.log(chalk.gray('  Auth URL:'), provider.authorizationUrl);
+        logger.info(chalk.gray('  Auth URL:'), provider.authorizationUrl);
       }
       if (provider.scope) {
-        console.log(chalk.gray('  Scope:'), provider.scope);
+        logger.info(chalk.gray('  Scope:'), provider.scope);
       }
       if (provider.supportedGrantTypes) {
-        console.log(chalk.gray('  Grants:'), provider.supportedGrantTypes.join(', '));
+        logger.info(chalk.gray('  Grants:'), provider.supportedGrantTypes.join(', '));
       }
     });
 
-    console.log(
+    logger.info(
       '\n' + chalk.gray('Available presets:'),
       providerManager.listProviderIds().join(', '),
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Failed to list configuration:'), errorMessage);
+    logger.error(chalk.red('✗ Failed to list configuration:'), errorMessage);
     process.exit(1);
   }
 }

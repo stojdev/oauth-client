@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import chalk from 'chalk';
 import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
 import { ConfigLoader } from '../../config/ConfigLoader.js';
@@ -35,9 +33,9 @@ export async function testCommand(
   const results: TestResult[] = [];
 
   try {
-    console.log(chalk.blue(`🧪 Testing OAuth Provider: ${provider}`));
-    console.log(chalk.gray('═'.repeat(50)));
-    console.log();
+    logger.info(chalk.blue(`🧪 Testing OAuth Provider: ${provider}`));
+    logger.info(chalk.gray('═'.repeat(50)));
+    logger.info('');
 
     // Load configuration
     let providerConfig: ProviderConfig;
@@ -73,20 +71,20 @@ export async function testCommand(
       grantTypes = ['client_credentials', 'authorization_code'];
     }
 
-    console.log(chalk.blue('Configuration:'));
-    console.log(chalk.gray(`  Provider: ${providerConfig.name || provider}`));
-    console.log(chalk.gray(`  Client ID: ${providerConfig.clientId?.substring(0, 10)}...`));
-    console.log(chalk.gray(`  Token URL: ${providerConfig.tokenUrl}`));
+    logger.info(chalk.blue('Configuration:'));
+    logger.info(chalk.gray(`  Provider: ${providerConfig.name || provider}`));
+    logger.info(chalk.gray(`  Client ID: ${providerConfig.clientId?.substring(0, 10)}...`));
+    logger.info(chalk.gray(`  Token URL: ${providerConfig.tokenUrl}`));
     if (providerConfig.authorizationUrl) {
-      console.log(chalk.gray(`  Auth URL: ${providerConfig.authorizationUrl}`));
+      logger.info(chalk.gray(`  Auth URL: ${providerConfig.authorizationUrl}`));
     }
-    console.log();
+    logger.info('');
 
-    console.log(chalk.blue('Grant Types to Test:'));
+    logger.info(chalk.blue('Grant Types to Test:'));
     grantTypes.forEach((grant) => {
-      console.log(chalk.gray(`  • ${grant}`));
+      logger.info(chalk.gray(`  • ${grant}`));
     });
-    console.log();
+    logger.info('');
 
     // Test each grant type
     for (const grantType of grantTypes) {
@@ -94,10 +92,10 @@ export async function testCommand(
     }
 
     // Display summary
-    console.log();
-    console.log(chalk.blue('═'.repeat(50)));
-    console.log(chalk.blue('Test Summary:'));
-    console.log();
+    logger.info('');
+    logger.info(chalk.blue('═'.repeat(50)));
+    logger.info(chalk.blue('Test Summary:'));
+    logger.info('');
 
     const successCount = results.filter((r) => r.status === 'success').length;
     const failedCount = results.filter((r) => r.status === 'failed').length;
@@ -112,25 +110,25 @@ export async function testCommand(
             ? chalk.red
             : chalk.gray;
 
-      console.log(`${icon} ${color(result.grantType)}`);
+      logger.info(`${icon} ${color(result.grantType)}`);
       if (result.message) {
-        console.log(chalk.gray(`   ${result.message}`));
+        logger.info(chalk.gray(`   ${result.message}`));
       }
       if (result.duration) {
-        console.log(chalk.gray(`   Duration: ${result.duration}ms`));
+        logger.info(chalk.gray(`   Duration: ${result.duration}ms`));
       }
     });
 
-    console.log();
-    console.log(chalk.blue('Statistics:'));
-    console.log(chalk.green(`  ✅ Passed: ${successCount}`));
+    logger.info('');
+    logger.info(chalk.blue('Statistics:'));
+    logger.info(chalk.green(`  ✅ Passed: ${successCount}`));
     if (failedCount > 0) {
-      console.log(chalk.red(`  ❌ Failed: ${failedCount}`));
+      logger.info(chalk.red(`  ❌ Failed: ${failedCount}`));
     }
     if (skippedCount > 0) {
-      console.log(chalk.gray(`  ⏭️  Skipped: ${skippedCount}`));
+      logger.info(chalk.gray(`  ⏭️  Skipped: ${skippedCount}`));
     }
-    console.log(chalk.gray(`  ⏱️  Total Duration: ${Date.now() - startTime}ms`));
+    logger.info(chalk.gray(`  ⏱️  Total Duration: ${Date.now() - startTime}ms`));
 
     // Exit with error if any tests failed
     if (failedCount > 0) {
@@ -138,7 +136,7 @@ export async function testCommand(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Test execution failed:'), errorMessage);
+    logger.error(chalk.red('✗ Test execution failed:'), errorMessage);
     process.exit(1);
   }
 }
@@ -155,13 +153,13 @@ async function testGrantType(
 ): Promise<void> {
   const startTime = Date.now();
 
-  console.log(chalk.blue(`Testing ${grantType}...`));
+  logger.info(chalk.blue(`Testing ${grantType}...`));
 
   try {
     // Check if grant type is supported
     if (grantType === 'authorization_code') {
-      console.log(chalk.yellow('  ⚠ Authorization Code grant requires user interaction'));
-      console.log(chalk.gray('  Skipping automated test'));
+      logger.info(chalk.yellow('  ⚠ Authorization Code grant requires user interaction'));
+      logger.info(chalk.gray('  Skipping automated test'));
       results.push({
         grantType,
         status: 'skipped',
@@ -171,8 +169,8 @@ async function testGrantType(
     }
 
     if (grantType === 'urn:ietf:params:oauth:grant-type:device_code') {
-      console.log(chalk.yellow('  ⚠ Device Code grant requires user interaction'));
-      console.log(chalk.gray('  Skipping automated test'));
+      logger.info(chalk.yellow('  ⚠ Device Code grant requires user interaction'));
+      logger.info(chalk.gray('  Skipping automated test'));
       results.push({
         grantType,
         status: 'skipped',
@@ -183,8 +181,8 @@ async function testGrantType(
 
     if (grantType === 'password') {
       if (!process.env.OAUTH_USERNAME || !process.env.OAUTH_PASSWORD) {
-        console.log(chalk.yellow('  ⚠ Password grant requires username/password'));
-        console.log(chalk.gray('  Set OAUTH_USERNAME and OAUTH_PASSWORD env vars'));
+        logger.info(chalk.yellow('  ⚠ Password grant requires username/password'));
+        logger.info(chalk.gray('  Set OAUTH_USERNAME and OAUTH_PASSWORD env vars'));
         results.push({
           grantType,
           status: 'skipped',
@@ -199,7 +197,7 @@ async function testGrantType(
 
     switch (grantType) {
       case 'client_credentials': {
-        console.log(chalk.gray('  Testing Client Credentials flow...'));
+        logger.info(chalk.gray('  Testing Client Credentials flow...'));
         const clientCredentials = new ClientCredentialsGrant({
           clientId: config.clientId,
           clientSecret: config.clientSecret!,
@@ -212,7 +210,7 @@ async function testGrantType(
       }
 
       case 'password': {
-        console.log(chalk.gray('  Testing Resource Owner Password flow...'));
+        logger.info(chalk.gray('  Testing Resource Owner Password flow...'));
         const passwordGrant = new ResourceOwnerPasswordGrant({
           clientId: config.clientId,
           clientSecret: config.clientSecret!,
@@ -226,7 +224,7 @@ async function testGrantType(
       }
 
       case 'refresh_token':
-        console.log(chalk.yellow('  ⚠ Refresh token requires existing token'));
+        logger.info(chalk.yellow('  ⚠ Refresh token requires existing token'));
         results.push({
           grantType,
           status: 'skipped',
@@ -235,7 +233,7 @@ async function testGrantType(
         return;
 
       case 'implicit':
-        console.log(chalk.yellow('  ⚠ Implicit grant is deprecated'));
+        logger.info(chalk.yellow('  ⚠ Implicit grant is deprecated'));
         results.push({
           grantType,
           status: 'skipped',
@@ -252,7 +250,7 @@ async function testGrantType(
       throw new Error('No access token received');
     }
 
-    console.log(chalk.green(`  ✓ Token obtained successfully`));
+    logger.info(chalk.green(`  ✓ Token obtained successfully`));
 
     // Decode and validate JWT if possible
     try {
@@ -272,26 +270,26 @@ async function testGrantType(
       );
 
       if (verificationResult.isOpaque) {
-        console.log(chalk.gray(`  Token type: Opaque`));
+        logger.info(chalk.gray(`  Token type: Opaque`));
       } else if (verificationResult.valid && verificationResult.payload) {
-        console.log(chalk.gray(`  Token type: JWT (Verified)`));
-        console.log(chalk.green(`  ✓ Signature verified`));
-        console.log(chalk.gray(`  Issuer: ${verificationResult.payload.iss || 'N/A'}`));
-        console.log(chalk.gray(`  Subject: ${verificationResult.payload.sub || 'N/A'}`));
-        console.log(chalk.gray(`  Algorithm: ${verificationResult.header?.alg || 'N/A'}`));
+        logger.info(chalk.gray(`  Token type: JWT (Verified)`));
+        logger.info(chalk.green(`  ✓ Signature verified`));
+        logger.info(chalk.gray(`  Issuer: ${verificationResult.payload.iss || 'N/A'}`));
+        logger.info(chalk.gray(`  Subject: ${verificationResult.payload.sub || 'N/A'}`));
+        logger.info(chalk.gray(`  Algorithm: ${verificationResult.header?.alg || 'N/A'}`));
 
         if (verificationResult.payload.exp) {
           const expiresIn = verificationResult.payload.exp - Math.floor(Date.now() / 1000);
           if (expiresIn > 0) {
-            console.log(chalk.gray(`  Expires in: ${expiresIn}s`));
+            logger.info(chalk.gray(`  Expires in: ${expiresIn}s`));
           } else {
-            console.log(chalk.yellow(`  ⚠ Token is already expired`));
+            logger.info(chalk.yellow(`  ⚠ Token is already expired`));
           }
         }
       } else {
         // Verification failed, but still try to decode for inspection
-        console.log(chalk.yellow(`  Token type: JWT (Unverified)`));
-        console.log(
+        logger.info(chalk.yellow(`  Token type: JWT (Unverified)`));
+        logger.info(
           chalk.red(`  ✗ Signature verification failed: ${verificationResult.errors.join(', ')}`),
         );
 
@@ -300,32 +298,32 @@ async function testGrantType(
           (token as Record<string, unknown>).access_token as string,
         );
         if (decoded) {
-          console.log(chalk.gray(`  Issuer: ${decoded.payload.iss || 'N/A'}`));
-          console.log(chalk.gray(`  Subject: ${decoded.payload.sub || 'N/A'}`));
-          console.log(chalk.gray(`  Algorithm: ${decoded.header.alg || 'N/A'}`));
+          logger.info(chalk.gray(`  Issuer: ${decoded.payload.iss || 'N/A'}`));
+          logger.info(chalk.gray(`  Subject: ${decoded.payload.sub || 'N/A'}`));
+          logger.info(chalk.gray(`  Algorithm: ${decoded.header.alg || 'N/A'}`));
 
           if (JWTDecoder.isExpired(decoded)) {
-            console.log(chalk.yellow(`  ⚠ Token is already expired`));
+            logger.info(chalk.yellow(`  ⚠ Token is already expired`));
           } else {
             const exp = decoded.payload.exp;
             if (exp) {
               const expiresIn = exp - Math.floor(Date.now() / 1000);
-              console.log(chalk.gray(`  Expires in: ${expiresIn}s`));
+              logger.info(chalk.gray(`  Expires in: ${expiresIn}s`));
             }
           }
         }
       }
     } catch {
       // Not a JWT, which is fine
-      console.log(chalk.gray(`  Token type: Opaque`));
+      logger.info(chalk.gray(`  Token type: Opaque`));
     }
 
     if ((token as Record<string, unknown>).refresh_token) {
-      console.log(chalk.gray(`  ✓ Refresh token received`));
+      logger.info(chalk.gray(`  ✓ Refresh token received`));
     }
 
     if ((token as Record<string, unknown>).scope) {
-      console.log(chalk.gray(`  Scopes: ${(token as Record<string, unknown>).scope}`));
+      logger.info(chalk.gray(`  Scopes: ${(token as Record<string, unknown>).scope}`));
     }
 
     results.push({
@@ -338,7 +336,7 @@ async function testGrantType(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    console.log(chalk.red(`  ✗ Test failed: ${errorMessage}`));
+    logger.info(chalk.red(`  ✗ Test failed: ${errorMessage}`));
 
     if (verbose) {
       logger.error('Test error details', error);
@@ -352,7 +350,7 @@ async function testGrantType(
     });
   }
 
-  console.log();
+  logger.info('');
 }
 
 /**
@@ -366,9 +364,9 @@ export async function testDiscoveryCommand(
   },
 ): Promise<void> {
   try {
-    console.log(chalk.blue(`🔍 Testing Provider Discovery: ${provider}`));
-    console.log(chalk.gray('═'.repeat(50)));
-    console.log();
+    logger.info(chalk.blue(`🔍 Testing Provider Discovery: ${provider}`));
+    logger.info(chalk.gray('═'.repeat(50)));
+    logger.info('');
 
     // Load configuration
     let providerConfig: ProviderConfig;
@@ -400,38 +398,38 @@ export async function testDiscoveryCommand(
       { name: 'Revocation', url: providerConfig.revocationUrl },
     ];
 
-    console.log(chalk.blue('Testing Endpoints:'));
-    console.log();
+    logger.info(chalk.blue('Testing Endpoints:'));
+    logger.info('');
 
     for (const endpoint of endpoints) {
       if (!endpoint.url) {
-        console.log(chalk.gray(`  ${endpoint.name}: Not configured`));
+        logger.info(chalk.gray(`  ${endpoint.name}: Not configured`));
         continue;
       }
 
       try {
         const response = await fetch(endpoint.url, { method: 'GET' });
         if (response.ok) {
-          console.log(chalk.green(`  ✓ ${endpoint.name}: ${endpoint.url}`));
+          logger.info(chalk.green(`  ✓ ${endpoint.name}: ${endpoint.url}`));
           if (options.verbose) {
             const contentType = response.headers.get('content-type');
-            console.log(chalk.gray(`    Content-Type: ${contentType}`));
+            logger.info(chalk.gray(`    Content-Type: ${contentType}`));
           }
         } else {
-          console.log(
+          logger.info(
             chalk.yellow(`  ⚠ ${endpoint.name}: ${response.status} ${response.statusText}`),
           );
         }
       } catch (error) {
-        console.log(chalk.red(`  ✗ ${endpoint.name}: Failed to connect`));
+        logger.info(chalk.red(`  ✗ ${endpoint.name}: Failed to connect`));
         if (options.verbose) {
-          console.log(chalk.gray(`    Error: ${error}`));
+          logger.info(chalk.gray(`    Error: ${error}`));
         }
       }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Discovery test failed:'), errorMessage);
+    logger.error(chalk.red('✗ Discovery test failed:'), errorMessage);
     process.exit(1);
   }
 }

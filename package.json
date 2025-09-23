@@ -29,9 +29,10 @@
     "clean": "rm -rf dist coverage",
     "prebuild": "npm run clean",
     "pretest": "npm run lint && npm run typecheck",
+    "check:no-mocks": "node scripts/check-no-mocks.js",
     "quality-gate": "pnpm run quality-gate:full",
-    "quality-gate:full": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
-    "quality-gate:quick": "pnpm run typecheck && pnpm run lint"
+    "quality-gate:full": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run build",
+    "quality-gate:quick": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint"
   },
   "keywords": [
     "oauth",

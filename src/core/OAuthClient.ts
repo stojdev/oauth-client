@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { logger } from '../utils/Logger.js';
 import { validateOAuthConfig, validateTokenResponse } from '../utils/Validators.js';
 import { ClientAuth, ClientAuthMethod } from '../utils/ClientAuth.js';
+import { OAuthClientError } from './ErrorHandler.js';
 import { GrantType } from '../types/index.js';
 import type { OAuthConfig, TokenResponse, OAuthError } from '../types/index.js';
 
@@ -117,15 +118,74 @@ export abstract class OAuthClient {
   }
 
   /**
-   * Revoke a token
+   * Revoke a token per RFC 7009
    */
   async revokeToken(
-    _token: string,
-    _tokenType: 'access_token' | 'refresh_token' = 'access_token',
+    token: string,
+    tokenType: 'access_token' | 'refresh_token' = 'access_token',
+    revocationUrl?: string,
   ): Promise<void> {
-    // This would need a revocation endpoint configured
-    // _token and _tokenType would be used when revocation is implemented
-    throw new Error('Token revocation not implemented');
+    // Check if we have a revocation URL (either passed or from config)
+    const revocationEndpoint =
+      revocationUrl ||
+      ((this.config as unknown as Record<string, unknown>).revocationUrl as string | undefined);
+
+    if (!revocationEndpoint) {
+      throw new OAuthClientError(
+        'Token revocation endpoint not configured. Provide revocationUrl parameter or configure it in provider settings.',
+      );
+    }
+
+    try {
+      // Prepare the revocation request per RFC 7009
+      const params = new URLSearchParams({
+        token,
+        token_type_hint: tokenType,
+      });
+
+      // Apply client authentication (Basic, POST, or JWT)
+      const request: AxiosRequestConfig = {
+        method: 'POST',
+        url: revocationEndpoint,
+        data: params.toString(),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        // RFC 7009: The invalid token does not cause an error (200 is success even if token was invalid)
+        validateStatus: (status) => status === 200,
+      };
+
+      // Apply client authentication based on configuration
+      ClientAuth.applyClientAuth(request, params, {
+        clientId: this.config.clientId,
+        clientSecret: this.config.clientSecret,
+        authMethod: this.config.authMethod || ClientAuthMethod.ClientSecretBasic,
+        privateKey: this.config.privateKey,
+        tokenUrl: revocationEndpoint,
+      });
+
+      // Send revocation request
+      const response = await this.httpClient.request(request);
+
+      // RFC 7009: A successful response is indicated by HTTP status code 200
+      if (response.status === 200) {
+        logger.debug('Token successfully revoked', { tokenType });
+      } else {
+        // This shouldn't happen due to validateStatus, but handle it just in case
+        throw new OAuthClientError(`Token revocation failed with status ${response.status}`);
+      }
+    } catch (error) {
+      if (error instanceof OAuthClientError) {
+        throw error;
+      }
+
+      // Network errors or other issues
+      logger.error('Token revocation error', error);
+      throw new OAuthClientError(
+        'Failed to revoke token: ' + (error instanceof Error ? error.message : 'Unknown error'),
+      );
+    }
   }
 
   /**

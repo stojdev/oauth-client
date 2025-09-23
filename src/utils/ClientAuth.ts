@@ -1,4 +1,6 @@
 import { AxiosRequestConfig } from 'axios';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { logger } from './Logger.js';
 
 /**
@@ -124,8 +126,7 @@ export class ClientAuth {
   }
 
   /**
-   * Apply JWT Authentication (client_secret_jwt or private_key_jwt)
-   * Not fully implemented - would require JWT creation logic
+   * Apply JWT Authentication (client_secret_jwt or private_key_jwt) per RFC 7523
    */
   private static applyJWTAuth(
     config: AxiosRequestConfig,
@@ -133,23 +134,31 @@ export class ClientAuth {
     authConfig: ClientAuthConfig,
     keyType: 'client_secret' | 'private_key',
   ): AxiosRequestConfig {
-    // For now, log that JWT auth is not implemented and fall back to Basic auth
-    logger.warn(
-      `JWT authentication (${keyType === 'client_secret' ? 'client_secret_jwt' : 'private_key_jwt'}) ` +
-        'is not yet implemented. Falling back to Basic authentication.',
-    );
+    try {
+      // Create JWT assertion per RFC 7523
+      const assertion = this.createJWTAssertion(authConfig, keyType);
 
-    if (authConfig.clientSecret) {
-      return this.applyBasicAuth(config, authConfig);
-    } else {
-      return this.applyPublicClientAuth(config, params, authConfig);
+      // Add JWT assertion to request parameters
+      params.set('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+      params.set('client_assertion', assertion);
+      params.set('client_id', authConfig.clientId);
+
+      // Ensure data is properly set
+      config.data = params.toString();
+
+      logger.debug(
+        `Applied ${keyType === 'client_secret' ? 'client_secret_jwt' : 'private_key_jwt'} authentication`,
+      );
+
+      return config;
+    } catch (error) {
+      // If JWT creation fails, throw error instead of falling back
+      logger.error(`Failed to create JWT assertion for ${keyType} authentication`, error);
+      throw new Error(
+        `Failed to apply ${keyType === 'client_secret' ? 'client_secret_jwt' : 'private_key_jwt'} authentication: ` +
+          (error instanceof Error ? error.message : 'Unknown error'),
+      );
     }
-
-    // TODO: Implement JWT assertion creation
-    // const assertion = this.createJWTAssertion(authConfig, keyType);
-    // params.set('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
-    // params.set('client_assertion', assertion);
-    // params.set('client_id', authConfig.clientId);
   }
 
   /**
@@ -253,14 +262,72 @@ export class ClientAuth {
     };
   }
 
-  // TODO: Implement JWT assertion creation for client_secret_jwt and private_key_jwt
-  // private static createJWTAssertion(
-  //   authConfig: ClientAuthConfig,
-  //   keyType: 'client_secret' | 'private_key'
-  // ): string {
-  //   // This would create a JWT assertion per RFC 7523
-  //   // For client_secret_jwt: sign with HMAC using client_secret
-  //   // For private_key_jwt: sign with RSA/ECDSA using private_key
-  //   throw new Error('JWT assertion creation not yet implemented');
-  // }
+  /**
+   * Create JWT assertion for client authentication per RFC 7523
+   */
+  private static createJWTAssertion(
+    authConfig: ClientAuthConfig,
+    keyType: 'client_secret' | 'private_key',
+  ): string {
+    if (!authConfig.tokenUrl) {
+      throw new Error('Token URL is required for JWT assertion creation');
+    }
+
+    // Generate JWT ID (jti) - unique identifier for the JWT
+    const jti = crypto.randomBytes(16).toString('hex');
+
+    // Current time in seconds
+    const now = Math.floor(Date.now() / 1000);
+
+    // JWT payload per RFC 7523
+    const payload = {
+      iss: authConfig.clientId, // Issuer: client_id
+      sub: authConfig.clientId, // Subject: client_id
+      aud: authConfig.tokenUrl, // Audience: token endpoint URL
+      jti, // JWT ID: unique identifier
+      exp: now + 60, // Expiration: 1 minute from now
+      iat: now, // Issued at: current time
+    };
+
+    if (keyType === 'client_secret') {
+      // client_secret_jwt: Sign with HMAC using client_secret
+      if (!authConfig.clientSecret) {
+        throw new Error('Client secret is required for client_secret_jwt authentication');
+      }
+
+      // Use HS256 (HMAC with SHA-256) as the default algorithm
+      const token = jwt.sign(payload, authConfig.clientSecret, {
+        algorithm: 'HS256',
+        noTimestamp: true, // We're setting iat manually
+      });
+
+      logger.debug('Created JWT assertion with client_secret_jwt (HS256)');
+      return token;
+    } else {
+      // private_key_jwt: Sign with RSA or ECDSA using private key
+      if (!authConfig.privateKey) {
+        throw new Error('Private key is required for private_key_jwt authentication');
+      }
+
+      // Detect key type and use appropriate algorithm
+      let algorithm: jwt.Algorithm = 'RS256'; // Default to RS256
+
+      if (authConfig.privateKey.includes('BEGIN EC PRIVATE KEY')) {
+        algorithm = 'ES256'; // ECDSA with P-256 and SHA-256
+      } else if (
+        authConfig.privateKey.includes('BEGIN RSA PRIVATE KEY') ||
+        authConfig.privateKey.includes('BEGIN PRIVATE KEY')
+      ) {
+        algorithm = 'RS256'; // RSA with SHA-256
+      }
+
+      const token = jwt.sign(payload, authConfig.privateKey, {
+        algorithm,
+        noTimestamp: true, // We're setting iat manually
+      });
+
+      logger.debug(`Created JWT assertion with private_key_jwt (${algorithm})`);
+      return token;
+    }
+  }
 }

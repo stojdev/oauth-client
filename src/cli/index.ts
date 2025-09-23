@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { Command } from 'commander';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
@@ -157,15 +155,15 @@ program
     const providers = tokenManager.listProviders();
 
     if (providers.length === 0) {
-      console.log(chalk.yellow('No stored tokens found'));
+      logger.info(chalk.yellow('No stored tokens found'));
       return;
     }
 
-    console.log(chalk.blue('Stored tokens:'));
+    logger.info(chalk.blue('Stored tokens:'));
     for (const provider of providers) {
       const token = await tokenManager.getToken(provider);
       if (token) {
-        console.log(chalk.gray(`- ${provider}: ${token.access_token.substring(0, 20)}...`));
+        logger.info(chalk.gray(`- ${provider}: ${token.access_token.substring(0, 20)}...`));
       }
     }
   });
@@ -177,7 +175,7 @@ program
   .description('Clear all stored tokens')
   .action(async () => {
     await tokenManager.clearAll();
-    console.log(chalk.green('✓ All tokens cleared'));
+    logger.info(chalk.green('✓ All tokens cleared'));
   });
 
 // Remove token
@@ -187,10 +185,10 @@ program
   .action(async (provider) => {
     try {
       await tokenManager.deleteToken(provider);
-      console.log(chalk.green(`✓ Token removed for provider: ${provider}`));
+      logger.info(chalk.green(`✓ Token removed for provider: ${provider}`));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(chalk.red('✗ Failed to remove token:'), errorMessage);
+      logger.error(chalk.red('✗ Failed to remove token:'), errorMessage);
       process.exit(1);
     }
   });
@@ -201,7 +199,7 @@ program
   .description('Set logging level (error, warn, info, debug)')
   .action((level) => {
     logger.level = level;
-    console.log(chalk.green(`✓ Log level set to: ${level}`));
+    logger.info(chalk.green(`✓ Log level set to: ${level}`));
   });
 
 // Interactive mode

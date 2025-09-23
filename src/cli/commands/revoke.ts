@@ -1,9 +1,10 @@
-/* eslint-disable no-console */
-
 import chalk from 'chalk';
 import axios from 'axios';
 import { logger } from '../../utils/Logger.js';
 import tokenManager from '../../core/TokenManager.js';
+import { ConfigLoader } from '../../config/ConfigLoader.js';
+import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
+import { ClientCredentialsGrant } from '../../grants/ClientCredentials.js';
 
 /**
  * Revoke an OAuth token
@@ -23,16 +24,16 @@ export async function revokeCommand(
     // Check if it's a provider name (stored token)
     const storedToken = await tokenManager.getToken(tokenOrProvider);
     if (storedToken) {
-      console.log(chalk.blue(`Found stored token for provider: ${tokenOrProvider}`));
+      logger.info(chalk.blue(`Found stored token for provider: ${tokenOrProvider}`));
 
       // Prefer refresh token for revocation if available
       if (storedToken.refresh_token) {
         token = storedToken.refresh_token;
         tokenType = 'refresh_token';
-        console.log(chalk.gray('Using refresh token for revocation'));
+        logger.info(chalk.gray('Using refresh token for revocation'));
       } else {
         token = storedToken.access_token;
-        console.log(chalk.gray('Using access token for revocation'));
+        logger.info(chalk.gray('Using access token for revocation'));
       }
     }
 
@@ -74,17 +75,17 @@ export async function revokeCommand(
 
     // Check response
     if (response.status === 200) {
-      console.log(chalk.green('✓ Token revoked successfully'));
+      logger.info(chalk.green('✓ Token revoked successfully'));
 
       // Remove from storage if it was a stored token
       if (storedToken) {
         await tokenManager.deleteToken(tokenOrProvider);
-        console.log(chalk.gray(`Removed token from storage: ${tokenOrProvider}`));
+        logger.info(chalk.gray(`Removed token from storage: ${tokenOrProvider}`));
       }
     } else if (response.status === 400) {
       // Some providers return 400 for invalid tokens
       logger.warn('Token may already be revoked or invalid', response.data);
-      console.log(chalk.yellow('⚠ Token may already be revoked or invalid'));
+      logger.info(chalk.yellow('⚠ Token may already be revoked or invalid'));
     } else {
       throw new Error(
         `Revocation failed with status ${response.status}: ${JSON.stringify(response.data)}`,
@@ -93,26 +94,26 @@ export async function revokeCommand(
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
-        console.error(chalk.red('✗ Revocation failed:'));
-        console.error(chalk.red(`  Status: ${error.response.status}`));
-        console.error(chalk.red(`  Response: ${JSON.stringify(error.response.data)}`));
+        logger.error(chalk.red('✗ Revocation failed:'));
+        logger.error(chalk.red(`  Status: ${error.response.status}`));
+        logger.error(chalk.red(`  Response: ${JSON.stringify(error.response.data)}`));
 
         // Provider-specific error messages
         if (error.response.data?.error) {
-          console.error(chalk.red(`  Error: ${error.response.data.error}`));
+          logger.error(chalk.red(`  Error: ${error.response.data.error}`));
           if (error.response.data.error_description) {
-            console.error(chalk.red(`  Description: ${error.response.data.error_description}`));
+            logger.error(chalk.red(`  Description: ${error.response.data.error_description}`));
           }
         }
       } else if (error.request) {
-        console.error(chalk.red('✗ No response from revocation endpoint'));
-        console.error(chalk.gray('Check if the URL is correct and the server is reachable'));
+        logger.error(chalk.red('✗ No response from revocation endpoint'));
+        logger.error(chalk.gray('Check if the URL is correct and the server is reachable'));
       } else {
-        console.error(chalk.red('✗ Failed to send revocation request:'), error.message);
+        logger.error(chalk.red('✗ Failed to send revocation request:'), error.message);
       }
     } else {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(chalk.red('✗ Revocation failed:'), errorMessage);
+      logger.error(chalk.red('✗ Revocation failed:'), errorMessage);
     }
 
     process.exit(1);
@@ -130,17 +131,17 @@ export async function revokeAllCommand(
   const providers = tokenManager.listProviders();
 
   if (providers.length === 0) {
-    console.log(chalk.yellow('No stored tokens to revoke'));
+    logger.info(chalk.yellow('No stored tokens to revoke'));
     return;
   }
 
   if (!options.force) {
-    console.log(chalk.yellow(`⚠ This will revoke tokens for ${providers.length} provider(s)`));
-    console.log(chalk.gray('Use --force to confirm'));
+    logger.info(chalk.yellow(`⚠ This will revoke tokens for ${providers.length} provider(s)`));
+    logger.info(chalk.gray('Use --force to confirm'));
     return;
   }
 
-  console.log(chalk.blue(`Revoking tokens for ${providers.length} provider(s)...`));
+  logger.info(chalk.blue(`Revoking tokens for ${providers.length} provider(s)...`));
 
   const results = {
     success: 0,
@@ -156,24 +157,79 @@ export async function revokeAllCommand(
         continue;
       }
 
-      // Note: This would need provider-specific revocation URLs
-      // For now, just remove from storage
+      // Try to get provider configuration to find revocation URL
+      let revocationUrl: string | undefined;
+      let clientId: string | undefined;
+      let clientSecret: string | undefined;
+
+      try {
+        // First, try to load from configuration files
+        const configLoader = new ConfigLoader();
+        const config = await configLoader.load();
+        const providerConfig = config.providers.find((p) => p.id === provider);
+
+        if (providerConfig) {
+          revocationUrl = providerConfig.revocationUrl;
+          clientId = providerConfig.clientId;
+          clientSecret = providerConfig.clientSecret;
+        }
+      } catch {
+        // Configuration not found, try presets
+        const providerManager = new ProviderConfigManager();
+        const preset = providerManager.getPreset(provider);
+        if (preset) {
+          revocationUrl = preset.revocationUrl;
+          // Client credentials would need to come from environment or options
+          clientId = process.env.OAUTH_CLIENT_ID;
+          clientSecret = process.env.OAUTH_CLIENT_SECRET;
+        }
+      }
+
+      // If we have a revocation URL, attempt to revoke the token properly
+      if (revocationUrl && clientId) {
+        try {
+          // Create a minimal OAuth client just for revocation
+          const client = new ClientCredentialsGrant({
+            clientId,
+            clientSecret: clientSecret || '',
+            tokenUrl: '', // Not needed for revocation
+            authorizationUrl: '', // Not needed for revocation
+          });
+
+          // Revoke refresh token first if available
+          if (token.refresh_token) {
+            await client.revokeToken(token.refresh_token, 'refresh_token', revocationUrl);
+            logger.info(chalk.gray(`  Revoked refresh token for ${provider}`));
+          }
+
+          // Then revoke access token
+          await client.revokeToken(token.access_token, 'access_token', revocationUrl);
+          logger.info(chalk.gray(`  Revoked access token for ${provider}`));
+        } catch (error) {
+          logger.debug(`Failed to revoke token at provider: ${error}`);
+          // Continue to delete from storage even if provider revocation fails
+        }
+      } else {
+        logger.debug(`No revocation URL found for ${provider}, removing locally only`);
+      }
+
+      // Always remove from local storage
       await tokenManager.deleteToken(provider);
-      console.log(chalk.green(`✓ Removed token for ${provider}`));
+      logger.info(chalk.green(`✓ Revoked and removed token for ${provider}`));
       results.success++;
-    } catch {
-      console.error(chalk.red(`✗ Failed to revoke ${provider}`));
+    } catch (error) {
+      logger.error(chalk.red(`✗ Failed to revoke ${provider}: ${error}`));
       results.failed++;
     }
   }
 
-  console.log();
-  console.log(chalk.blue('Revocation Summary:'));
-  console.log(chalk.green(`  Success: ${results.success}`));
+  logger.info('');
+  logger.info(chalk.blue('Revocation Summary:'));
+  logger.info(chalk.green(`  Success: ${results.success}`));
   if (results.failed > 0) {
-    console.log(chalk.red(`  Failed: ${results.failed}`));
+    logger.info(chalk.red(`  Failed: ${results.failed}`));
   }
   if (results.skipped > 0) {
-    console.log(chalk.gray(`  Skipped: ${results.skipped}`));
+    logger.info(chalk.gray(`  Skipped: ${results.skipped}`));
   }
 }

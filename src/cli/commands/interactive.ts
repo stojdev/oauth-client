@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -12,6 +10,7 @@ import { inspectCommand } from './inspect.js';
 import { configInitCommand, configAddCommand, configListCommand } from './config.js';
 import tokenManager from '../../core/TokenManager.js';
 import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
+import { logger } from '../../utils/Logger.js';
 
 interface CommandHistoryEntry {
   timestamp: string;
@@ -82,12 +81,12 @@ export class InteractiveCLI {
    * Main menu
    */
   async mainMenu(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('╔════════════════════════════════════╗'));
-    console.log(chalk.blue('║     OAuth 2.0 Test Client          ║'));
-    console.log(chalk.blue('║     Interactive Mode               ║'));
-    console.log(chalk.blue('╚════════════════════════════════════╝'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('╔════════════════════════════════════╗'));
+    logger.info(chalk.blue('║     OAuth 2.0 Test Client          ║'));
+    logger.info(chalk.blue('║     Interactive Mode               ║'));
+    logger.info(chalk.blue('╚════════════════════════════════════╝'));
+    logger.info('');
 
     const choices = [
       { name: '🔐 Authenticate with Provider', value: 'auth' },
@@ -132,7 +131,7 @@ export class InteractiveCLI {
         await this.viewHistory();
         break;
       case 'exit':
-        console.log(chalk.green('👋 Goodbye!'));
+        logger.info(chalk.green('👋 Goodbye!'));
         process.exit(0);
     }
 
@@ -145,9 +144,9 @@ export class InteractiveCLI {
    * Authentication flow
    */
   async authenticateFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('🔐 Provider Authentication'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('🔐 Provider Authentication'));
+    logger.info('');
 
     // Get available providers
     const providerIds = this.providerManager.listProviderIds();
@@ -295,7 +294,7 @@ export class InteractiveCLI {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       this.addToHistory(`auth ${provider}`, `error: ${errorMsg}`);
-      console.error(chalk.red('Authentication failed:'), errorMsg);
+      logger.error(chalk.red('Authentication failed:'), errorMsg);
     }
   }
 
@@ -303,9 +302,9 @@ export class InteractiveCLI {
    * Request token flow
    */
   async requestTokenFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('🎫 Manual Token Request'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('🎫 Manual Token Request'));
+    logger.info('');
 
     const grantTypes = [
       { name: '🌐 Authorization Code', value: 'authorization_code' },
@@ -435,7 +434,7 @@ export class InteractiveCLI {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       this.addToHistory(`token ${grantType}`, `error: ${errorMsg}`);
-      console.error(chalk.red('Token request failed:'), errorMsg);
+      logger.error(chalk.red('Token request failed:'), errorMsg);
     }
   }
 
@@ -443,14 +442,14 @@ export class InteractiveCLI {
    * Refresh token flow
    */
   async refreshTokenFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('🔄 Refresh Token'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('🔄 Refresh Token'));
+    logger.info('');
 
     const providers = tokenManager.listProviders();
 
     if (providers.length === 0) {
-      console.log(chalk.yellow('No stored tokens found'));
+      logger.info(chalk.yellow('No stored tokens found'));
       return;
     }
 
@@ -496,7 +495,7 @@ export class InteractiveCLI {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.addToHistory('refresh manual', `error: ${errorMsg}`);
-        console.error(chalk.red('Refresh failed:'), errorMsg);
+        logger.error(chalk.red('Refresh failed:'), errorMsg);
       }
     } else {
       try {
@@ -505,7 +504,7 @@ export class InteractiveCLI {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.addToHistory(`refresh ${provider}`, `error: ${errorMsg}`);
-        console.error(chalk.red('Refresh failed:'), errorMsg);
+        logger.error(chalk.red('Refresh failed:'), errorMsg);
       }
     }
   }
@@ -514,9 +513,9 @@ export class InteractiveCLI {
    * Inspect token flow
    */
   async inspectTokenFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('🔍 JWT Token Inspector'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('🔍 JWT Token Inspector'));
+    logger.info('');
 
     const { source } = await inquirer.prompt([
       {
@@ -554,7 +553,7 @@ export class InteractiveCLI {
     } else {
       const providers = tokenManager.listProviders();
       if (providers.length === 0) {
-        console.log(chalk.yellow('No stored tokens found'));
+        logger.info(chalk.yellow('No stored tokens found'));
         return;
       }
 
@@ -596,7 +595,7 @@ export class InteractiveCLI {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         this.addToHistory('inspect token', `error: ${errorMsg}`);
-        console.error(chalk.red('Inspection failed:'), errorMsg);
+        logger.error(chalk.red('Inspection failed:'), errorMsg);
       }
     }
   }
@@ -605,9 +604,9 @@ export class InteractiveCLI {
    * Configuration flow
    */
   async configureFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('⚙️  Provider Configuration'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('⚙️  Provider Configuration'));
+    logger.info('');
 
     const { action } = await inquirer.prompt([
       {
@@ -630,7 +629,7 @@ export class InteractiveCLI {
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           this.addToHistory('config:init', `error: ${errorMsg}`);
-          console.error(chalk.red('Init failed:'), errorMsg);
+          logger.error(chalk.red('Init failed:'), errorMsg);
         }
         break;
 
@@ -651,7 +650,7 @@ export class InteractiveCLI {
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           this.addToHistory(`config:add ${provider}`, `error: ${errorMsg}`);
-          console.error(chalk.red('Add failed:'), errorMsg);
+          logger.error(chalk.red('Add failed:'), errorMsg);
         }
         break;
       }
@@ -663,7 +662,7 @@ export class InteractiveCLI {
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           this.addToHistory('config:list', `error: ${errorMsg}`);
-          console.error(chalk.red('List failed:'), errorMsg);
+          logger.error(chalk.red('List failed:'), errorMsg);
         }
         break;
     }
@@ -673,9 +672,9 @@ export class InteractiveCLI {
    * Manage tokens flow
    */
   async manageTokensFlow(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('📦 Token Management'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('📦 Token Management'));
+    logger.info('');
 
     const providers = tokenManager.listProviders();
 
@@ -695,20 +694,20 @@ export class InteractiveCLI {
     switch (action) {
       case 'list':
         if (providers.length === 0) {
-          console.log(chalk.yellow('No stored tokens'));
+          logger.info(chalk.yellow('No stored tokens'));
         } else {
-          console.log(chalk.blue('Stored tokens:'));
+          logger.info(chalk.blue('Stored tokens:'));
           for (const provider of providers) {
             const token = await tokenManager.getToken(provider);
             if (token) {
               const preview = token.access_token.substring(0, 30) + '...';
-              console.log(chalk.gray(`• ${provider}: ${preview}`));
+              logger.info(chalk.gray(`• ${provider}: ${preview}`));
               if (token.expiresAt) {
                 const expiresIn = Math.floor((token.expiresAt - Date.now()) / 1000);
                 if (expiresIn > 0) {
-                  console.log(chalk.gray(`  Expires in: ${this.formatDuration(expiresIn)}`));
+                  logger.info(chalk.gray(`  Expires in: ${this.formatDuration(expiresIn)}`));
                 } else {
-                  console.log(chalk.red(`  Expired`));
+                  logger.info(chalk.red(`  Expired`));
                 }
               }
             }
@@ -719,7 +718,7 @@ export class InteractiveCLI {
 
       case 'remove': {
         if (providers.length === 0) {
-          console.log(chalk.yellow('No tokens to remove'));
+          logger.info(chalk.yellow('No tokens to remove'));
           break;
         }
 
@@ -734,11 +733,11 @@ export class InteractiveCLI {
 
         try {
           await tokenManager.deleteToken(provider);
-          console.log(chalk.green(`✓ Removed token for ${provider}`));
+          logger.info(chalk.green(`✓ Removed token for ${provider}`));
           this.addToHistory(`tokens:remove ${provider}`, 'success');
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          console.error(chalk.red('Failed to remove token:'), errorMsg);
+          logger.error(chalk.red('Failed to remove token:'), errorMsg);
           this.addToHistory(`tokens:remove ${provider}`, `error: ${errorMsg}`);
         }
         break;
@@ -756,10 +755,10 @@ export class InteractiveCLI {
 
         if (confirm) {
           await tokenManager.clearAll();
-          console.log(chalk.green('✓ All tokens cleared'));
+          logger.info(chalk.green('✓ All tokens cleared'));
           this.addToHistory('tokens:clear', 'success');
         } else {
-          console.log(chalk.gray('Cancelled'));
+          logger.info(chalk.gray('Cancelled'));
         }
         break;
       }
@@ -770,12 +769,12 @@ export class InteractiveCLI {
    * View command history
    */
   async viewHistory(): Promise<void> {
-    console.clear();
-    console.log(chalk.blue('📜 Command History'));
-    console.log();
+    process.stdout.write('\x1Bc');
+    logger.info(chalk.blue('📜 Command History'));
+    logger.info('');
 
     if (this.history.length === 0) {
-      console.log(chalk.yellow('No command history'));
+      logger.info(chalk.yellow('No command history'));
       return;
     }
 
@@ -787,14 +786,14 @@ export class InteractiveCLI {
       const time = date.toLocaleTimeString();
       const status = entry.result?.startsWith('error') ? chalk.red('✗') : chalk.green('✓');
 
-      console.log(chalk.gray(`[${time}]`), status, chalk.white(entry.command));
+      logger.info(chalk.gray(`[${time}]`), status, chalk.white(entry.command));
       if (entry.result?.startsWith('error')) {
-        console.log(chalk.red(`  └─ ${entry.result}`));
+        logger.info(chalk.red(`  └─ ${entry.result}`));
       }
     }
 
-    console.log();
-    console.log(chalk.gray(`Total commands: ${this.history.length}`));
+    logger.info('');
+    logger.info(chalk.gray(`Total commands: ${this.history.length}`));
 
     const { action } = await inquirer.prompt([
       {
@@ -811,7 +810,7 @@ export class InteractiveCLI {
     if (action === 'clear') {
       this.history = [];
       this.saveHistory();
-      console.log(chalk.green('✓ History cleared'));
+      logger.info(chalk.green('✓ History cleared'));
     }
   }
 
@@ -835,7 +834,7 @@ export class InteractiveCLI {
    * Prompt to continue
    */
   private async promptContinue(): Promise<void> {
-    console.log();
+    logger.info('');
     await inquirer.prompt([
       {
         type: 'input',
@@ -853,10 +852,10 @@ export class InteractiveCLI {
       await this.mainMenu();
     } catch (error) {
       if (error instanceof Error && error.message.includes('force closed')) {
-        console.log(chalk.yellow('\n👋 Exiting...'));
+        logger.info(chalk.yellow('\n👋 Exiting...'));
         process.exit(0);
       }
-      console.error(chalk.red('Error:'), error);
+      logger.error(chalk.red('Error:'), error);
       process.exit(1);
     }
   }

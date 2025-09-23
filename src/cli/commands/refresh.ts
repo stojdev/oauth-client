@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { RefreshTokenGrant } from '../../grants/RefreshToken.js';
 import tokenManager from '../../core/TokenManager.js';
 import { ConfigLoader } from '../../config/ConfigLoader.js';
+import { logger } from '../../utils/Logger.js';
 
 /**
  * Refresh an access token
@@ -25,7 +26,7 @@ export async function refreshCommand(
     if (storedToken && storedToken.refresh_token) {
       refreshToken = storedToken.refresh_token;
       provider = tokenOrProvider;
-      console.log(chalk.blue(`Refreshing token for provider: ${provider}`));
+      logger.info(chalk.blue(`Refreshing token for provider: ${provider}`));
     }
 
     if (!refreshToken) {
@@ -57,7 +58,7 @@ export async function refreshCommand(
       throw new Error('Client ID and token URL are required');
     }
 
-    console.log(chalk.blue('Refreshing access token...'));
+    logger.info(chalk.blue('Refreshing access token...'));
 
     const client = new RefreshTokenGrant({
       clientId,
@@ -71,33 +72,33 @@ export async function refreshCommand(
 
     // Display token
     if (options?.output === 'json') {
-      console.log(JSON.stringify(token, null, 2));
+      logger.info(JSON.stringify(token, null, 2));
     } else {
-      console.log(chalk.green('✓ Successfully refreshed token!'));
-      console.log(chalk.gray('Token Type:'), token.token_type);
-      console.log(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
+      logger.info(chalk.green('✓ Successfully refreshed token!'));
+      logger.info(chalk.gray('Token Type:'), token.token_type);
+      logger.info(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
 
       if (token.expires_in) {
-        console.log(chalk.gray('Expires In:'), token.expires_in, 'seconds');
+        logger.info(chalk.gray('Expires In:'), token.expires_in, 'seconds');
       }
 
       if (token.scope) {
-        console.log(chalk.gray('Scope:'), token.scope);
+        logger.info(chalk.gray('Scope:'), token.scope);
       }
 
       if (token.refresh_token) {
-        console.log(chalk.gray('New Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
+        logger.info(chalk.gray('New Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
       }
     }
 
     // Save token if requested
     if (options?.save !== false && provider) {
       await tokenManager.storeToken(provider, token);
-      console.log(chalk.green(`✓ Updated token saved for '${provider}'`));
+      logger.info(chalk.green(`✓ Updated token saved for '${provider}'`));
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Failed to refresh token:'), errorMessage);
+    logger.error(chalk.red('✗ Failed to refresh token:'), errorMessage);
     process.exit(1);
   }
 }

@@ -1,11 +1,10 @@
-/* eslint-disable no-console */
-
 import chalk from 'chalk';
 import { DiscoveryClient } from '../../providers/DiscoveryClient.js';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import inquirer from 'inquirer';
 import type { OIDCDiscoveryDocument } from '../../providers/DiscoveryClient.js';
+import { logger } from '../../utils/Logger.js';
 
 /**
  * Discover OAuth provider configuration
@@ -20,48 +19,48 @@ export async function discoverCommand(
   },
 ): Promise<void> {
   try {
-    console.log(chalk.blue(`🔍 Discovering OAuth configuration for: ${issuerUrl}`));
-    console.log();
+    logger.info(chalk.blue(`🔍 Discovering OAuth configuration for: ${issuerUrl}`));
+    logger.info('');
 
     // Perform discovery
     const document = await DiscoveryClient.discover(issuerUrl);
 
-    console.log(chalk.green('✓ Discovery successful!'));
-    console.log();
+    logger.info(chalk.green('✓ Discovery successful!'));
+    logger.info('');
 
     // Display discovered information
-    console.log(chalk.blue('Provider Information:'));
-    console.log(chalk.gray('  Issuer:'), document.issuer);
-    console.log(chalk.gray('  Authorization:'), document.authorization_endpoint);
-    console.log(chalk.gray('  Token:'), document.token_endpoint);
+    logger.info(chalk.blue('Provider Information:'));
+    logger.info(chalk.gray('  Issuer:'), document.issuer);
+    logger.info(chalk.gray('  Authorization:'), document.authorization_endpoint);
+    logger.info(chalk.gray('  Token:'), document.token_endpoint);
 
     if (document.userinfo_endpoint) {
-      console.log(chalk.gray('  UserInfo:'), document.userinfo_endpoint);
+      logger.info(chalk.gray('  UserInfo:'), document.userinfo_endpoint);
     }
     if (document.revocation_endpoint) {
-      console.log(chalk.gray('  Revocation:'), document.revocation_endpoint);
+      logger.info(chalk.gray('  Revocation:'), document.revocation_endpoint);
     }
     if (document.introspection_endpoint) {
-      console.log(chalk.gray('  Introspection:'), document.introspection_endpoint);
+      logger.info(chalk.gray('  Introspection:'), document.introspection_endpoint);
     }
     if (document.device_authorization_endpoint) {
-      console.log(chalk.gray('  Device Auth:'), document.device_authorization_endpoint);
+      logger.info(chalk.gray('  Device Auth:'), document.device_authorization_endpoint);
     }
 
-    console.log();
-    console.log(chalk.blue('Capabilities:'));
+    logger.info('');
+    logger.info(chalk.blue('Capabilities:'));
 
     // Grant types
     if (document.grant_types_supported) {
-      console.log(chalk.gray('  Grant Types:'));
+      logger.info(chalk.gray('  Grant Types:'));
       document.grant_types_supported.forEach((grant) => {
-        console.log(chalk.gray(`    • ${grant}`));
+        logger.info(chalk.gray(`    • ${grant}`));
       });
     }
 
     // PKCE support
     if (document.code_challenge_methods_supported) {
-      console.log(
+      logger.info(
         chalk.gray('  PKCE Methods:'),
         document.code_challenge_methods_supported.join(', '),
       );
@@ -69,19 +68,19 @@ export async function discoverCommand(
 
     // Scopes
     if (document.scopes_supported) {
-      console.log(chalk.gray('  Scopes:'));
+      logger.info(chalk.gray('  Scopes:'));
       const displayScopes = document.scopes_supported.slice(0, 10);
       displayScopes.forEach((scope) => {
-        console.log(chalk.gray(`    • ${scope}`));
+        logger.info(chalk.gray(`    • ${scope}`));
       });
       if (document.scopes_supported.length > 10) {
-        console.log(chalk.gray(`    ... and ${document.scopes_supported.length - 10} more`));
+        logger.info(chalk.gray(`    ... and ${document.scopes_supported.length - 10} more`));
       }
     }
 
     // Auth methods
     if (document.token_endpoint_auth_methods_supported) {
-      console.log(
+      logger.info(
         chalk.gray('  Auth Methods:'),
         document.token_endpoint_auth_methods_supported.join(', '),
       );
@@ -89,7 +88,7 @@ export async function discoverCommand(
 
     // Interactive mode - ask if user wants to create config
     if (options.interactive) {
-      console.log();
+      logger.info('');
       const { createConfig } = await inquirer.prompt([
         {
           type: 'confirm',
@@ -108,43 +107,43 @@ export async function discoverCommand(
     }
 
     // Get provider features
-    console.log();
-    console.log(chalk.blue('Analyzing provider features...'));
+    logger.info('');
+    logger.info(chalk.blue('Analyzing provider features...'));
     const features = await DiscoveryClient.getProviderFeatures(issuerUrl);
 
-    console.log(chalk.blue('Provider Features:'));
-    console.log(
+    logger.info(chalk.blue('Provider Features:'));
+    logger.info(
       chalk.gray('  OpenID Connect:'),
       features.supportsOIDC ? chalk.green('✓') : chalk.red('✗'),
     );
-    console.log(chalk.gray('  PKCE:'), features.supportsPKCE ? chalk.green('✓') : chalk.red('✗'));
-    console.log(
+    logger.info(chalk.gray('  PKCE:'), features.supportsPKCE ? chalk.green('✓') : chalk.red('✗'));
+    logger.info(
       chalk.gray('  Device Flow:'),
       features.supportsDeviceFlow ? chalk.green('✓') : chalk.red('✗'),
     );
-    console.log(
+    logger.info(
       chalk.gray('  Token Introspection:'),
       features.supportsIntrospection ? chalk.green('✓') : chalk.red('✗'),
     );
-    console.log(
+    logger.info(
       chalk.gray('  Token Revocation:'),
       features.supportsRevocation ? chalk.green('✓') : chalk.red('✗'),
     );
-    console.log(
+    logger.info(
       chalk.gray('  Refresh Tokens:'),
       features.supportsRefreshTokens ? chalk.green('✓') : chalk.red('✗'),
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Discovery failed:'), errorMessage);
+    logger.error(chalk.red('✗ Discovery failed:'), errorMessage);
 
     // Suggest alternatives
-    console.log();
-    console.log(chalk.yellow('Tips:'));
-    console.log(chalk.gray('  • Ensure the issuer URL is correct'));
-    console.log(chalk.gray('  • Try the base domain (e.g., https://example.com)'));
-    console.log(chalk.gray('  • Check if /.well-known/openid-configuration is accessible'));
-    console.log(chalk.gray('  • Some providers may not support discovery'));
+    logger.info('');
+    logger.info(chalk.yellow('Tips:'));
+    logger.info(chalk.gray('  • Ensure the issuer URL is correct'));
+    logger.info(chalk.gray('  • Try the base domain (e.g., https://example.com)'));
+    logger.info(chalk.gray('  • Check if /.well-known/openid-configuration is accessible'));
+    logger.info(chalk.gray('  • Some providers may not support discovery'));
 
     process.exit(1);
   }
@@ -206,11 +205,11 @@ async function createConfigFromDiscovery(
   // Save to file
   writeFileSync(filepath, JSON.stringify(configFile, null, 2));
 
-  console.log();
-  console.log(chalk.green(`✓ Configuration saved to: ${filepath}`));
-  console.log();
-  console.log(chalk.blue('You can now use:'));
-  console.log(chalk.gray(`  oauth auth ${config.id} --config ${filename}`));
+  logger.info('');
+  logger.info(chalk.green(`✓ Configuration saved to: ${filepath}`));
+  logger.info('');
+  logger.info(chalk.blue('You can now use:'));
+  logger.info(chalk.gray(`  oauth auth ${config.id} --config ${filename}`));
 }
 
 /**
@@ -225,8 +224,8 @@ export async function testDiscoveryCommand(): Promise<void> {
     { name: 'Keycloak (example)', url: 'https://keycloak.example.com/realms/master' },
   ];
 
-  console.log(chalk.blue('Testing discovery support for common providers:'));
-  console.log();
+  logger.info(chalk.blue('Testing discovery support for common providers:'));
+  logger.info('');
 
   for (const provider of providers) {
     process.stdout.write(chalk.gray(`${provider.name.padEnd(20)} `));
@@ -234,15 +233,15 @@ export async function testDiscoveryCommand(): Promise<void> {
     try {
       const supports = await DiscoveryClient.supportsDiscovery(provider.url);
       if (supports) {
-        console.log(chalk.green('✓ Supports discovery'));
+        logger.info(chalk.green('✓ Supports discovery'));
       } else {
-        console.log(chalk.yellow('⚠ No discovery endpoint found'));
+        logger.info(chalk.yellow('⚠ No discovery endpoint found'));
       }
     } catch {
-      console.log(chalk.red('✗ Failed to check'));
+      logger.info(chalk.red('✗ Failed to check'));
     }
   }
 
-  console.log();
-  console.log(chalk.gray('Note: Some URLs are examples and may not be accessible'));
+  logger.info('');
+  logger.info(chalk.gray('Note: Some URLs are examples and may not be accessible'));
 }

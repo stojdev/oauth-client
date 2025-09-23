@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { JWTDecoder } from '../../utils/JWTDecoder.js';
 import { JWTVerifier } from '../../utils/JWTVerifier.js';
 import tokenManager from '../../core/TokenManager.js';
+import { logger } from '../../utils/Logger.js';
 
 /**
  * Inspect and decode a token
@@ -24,7 +25,7 @@ export async function inspectCommand(
         throw new Error(`No token found for provider '${options.provider}'`);
       }
       tokenToInspect = storedToken.access_token;
-      console.log(chalk.blue(`Inspecting token for provider: ${options.provider}\n`));
+      logger.info(chalk.blue(`Inspecting token for provider: ${options.provider}\n`));
     }
 
     if (!tokenToInspect) {
@@ -32,22 +33,22 @@ export async function inspectCommand(
     }
 
     // Security warning for inspection mode
-    console.log(
+    logger.info(
       chalk.yellow('⚠️  SECURITY WARNING: This inspection does NOT verify token signatures'),
     );
-    console.log(
+    logger.info(
       chalk.yellow(
         '   For secure token validation, use the verification features in test commands',
       ),
     );
-    console.log();
+    logger.info('');
 
     // Check if token looks like a JWT
     const isJWTFormat = tokenToInspect.split('.').length === 3;
 
     if (!isJWTFormat) {
-      console.log(chalk.gray('Token appears to be opaque (not JWT format)'));
-      console.log(chalk.gray(`Token: ${tokenToInspect.substring(0, 50)}...`));
+      logger.info(chalk.gray('Token appears to be opaque (not JWT format)'));
+      logger.info(chalk.gray(`Token: ${tokenToInspect.substring(0, 50)}...`));
       return;
     }
 
@@ -59,37 +60,37 @@ export async function inspectCommand(
       });
 
       if (verifyResult.isOpaque) {
-        console.log(chalk.gray('Token is opaque (not JWT)'));
+        logger.info(chalk.gray('Token is opaque (not JWT)'));
         return;
       } else if (verifyResult.valid) {
-        console.log(chalk.green('✓ Token signature verified (if key was available)'));
+        logger.info(chalk.green('✓ Token signature verified (if key was available)'));
       } else {
-        console.log(chalk.yellow('⚠ Token signature could not be verified:'));
+        logger.info(chalk.yellow('⚠ Token signature could not be verified:'));
         verifyResult.errors.forEach((error) => {
-          console.log(chalk.yellow(`  - ${error}`));
+          logger.info(chalk.yellow(`  - ${error}`));
         });
       }
     } catch {
-      console.log(chalk.yellow('⚠ Could not attempt signature verification'));
+      logger.info(chalk.yellow('⚠ Could not attempt signature verification'));
     }
 
-    console.log();
+    logger.info('');
 
     // Decode and display token
     const formatted = JWTDecoder.format(tokenToInspect, options?.raw);
-    console.log(formatted);
+    logger.info(formatted);
 
     // Additional validation if requested
     if (options?.validate) {
-      console.log('\n' + chalk.blue('VALIDATION RESULTS:'));
+      logger.info('\n' + chalk.blue('VALIDATION RESULTS:'));
       const validation = JWTDecoder.validateStructure(tokenToInspect);
 
       if (validation.valid) {
-        console.log(chalk.green('✓ Token structure is valid'));
+        logger.info(chalk.green('✓ Token structure is valid'));
       } else {
-        console.log(chalk.red('✗ Token validation failed:'));
+        logger.info(chalk.red('✗ Token validation failed:'));
         validation.errors.forEach((error) => {
-          console.log(chalk.red(`  - ${error}`));
+          logger.info(chalk.red(`  - ${error}`));
         });
       }
     }
@@ -99,7 +100,7 @@ export async function inspectCommand(
     if (decoded) {
       try {
         const { ClipboardManager } = await import('../../utils/Clipboard.js');
-        console.log();
+        logger.info('');
         const payloadString = JSON.stringify(decoded.payload, null, 2);
         await ClipboardManager.copyWithFeedback(payloadString, 'Decoded JWT payload');
       } catch {
@@ -108,7 +109,7 @@ export async function inspectCommand(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(chalk.red('✗ Failed to inspect token:'), errorMessage);
+    logger.error(chalk.red('✗ Failed to inspect token:'), errorMessage);
     process.exit(1);
   }
 }

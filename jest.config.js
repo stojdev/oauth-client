@@ -5,6 +5,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/src/cli/commands/test.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
@@ -33,9 +34,6 @@ export default {
       lines: 80,
       statements: 80,
     },
-  },
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   clearMocks: true,

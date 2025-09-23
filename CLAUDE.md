@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## RULES for Claude Code when working with this repository
 
+### The GOLDEN RULE that governs all other rules: ALWAYS prioritize code quality, security ZERO mock functionality, TODO:s (except where mock functionality makes sense in test cases etc.) and adherence to best practices above all else
+
+The codebase must be of the highest quality, secure, production ready and free of mock implementations and TODOs. Any code that does not meet these standards must be refactored or removed.
+
 ### The Number ONE rule that cannot, ever, be broken: Frequently run the pnpm quality-gate command to ensure code quality and consistency
 
 There are NO, NONE, ZERO exceptions to this rule. Code that does not pass the quality gate is dead code and MUST be fixed or DELETED.
@@ -24,6 +28,8 @@ corrected immediately.
 Documentation is essential for maintainability. Any complex logic must be clearly explained in comments.
 
 ### Rule Number SIX: Do not use console.log/warn/error for logging. Use the established logging utility in src/utils/logger.ts
+
+### RULE Number SEVEN: ZERO tolerance for mock implementations. All code must be fully implemented and functional. Except for tests, which may use mocks as appropriate
 
 ## Project Overview
 
