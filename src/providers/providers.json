@@ -1,0 +1,261 @@
+{
+  "$schema": "../config/schema.json",
+  "providers": {
+    "google": {
+      "id": "google",
+      "name": "Google OAuth 2.0",
+      "description": "Google's OAuth 2.0 implementation for accessing Google APIs",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+      "tokenUrl": "https://oauth2.googleapis.com/token",
+      "revocationUrl": "https://oauth2.googleapis.com/revoke",
+      "userInfoUrl": "https://openidconnect.googleapis.com/v1/userinfo",
+      "jwksUri": "https://www.googleapis.com/oauth2/v3/certs",
+      "discoveryUrl": "https://accounts.google.com/.well-known/openid-configuration",
+      "supportedGrantTypes": ["authorization_code", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid email profile",
+      "responseType": "code",
+      "responseMode": "query",
+      "customAuthParams": {
+        "access_type": "offline",
+        "prompt": "consent"
+      },
+      "documentationUrl": "https://developers.google.com/identity/protocols/oauth2",
+      "setupInstructions": "1. Go to https://console.cloud.google.com/\n2. Create a new project or select existing\n3. Enable OAuth 2.0 API\n4. Create OAuth 2.0 credentials\n5. Add redirect URIs",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "github": {
+      "id": "github",
+      "name": "GitHub OAuth",
+      "description": "GitHub's OAuth implementation for accessing GitHub APIs",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://github.com/login/oauth/authorize",
+      "tokenUrl": "https://github.com/login/oauth/access_token",
+      "userInfoUrl": "https://api.github.com/user",
+      "supportedGrantTypes": ["authorization_code"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false,
+        "methods": ["S256"]
+      },
+      "scope": "read:user user:email",
+      "responseType": "code",
+      "responseMode": "query",
+      "customHeaders": {
+        "Accept": "application/json"
+      },
+      "documentationUrl": "https://docs.github.com/en/developers/apps/building-oauth-apps",
+      "setupInstructions": "1. Go to GitHub Settings > Developer settings\n2. Click 'New OAuth App'\n3. Fill in application details\n4. Add callback URL\n5. Save and copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "microsoft": {
+      "id": "microsoft",
+      "name": "Microsoft Identity Platform",
+      "description": "Microsoft's OAuth 2.0 and OpenID Connect implementation",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "revocationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/logout",
+      "userInfoUrl": "https://graph.microsoft.com/v1.0/me",
+      "jwksUri": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+      "discoveryUrl": "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid profile email offline_access",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://docs.microsoft.com/en-us/azure/active-directory/develop/",
+      "setupInstructions": "1. Go to https://portal.azure.com/\n2. Navigate to Azure Active Directory\n3. App registrations > New registration\n4. Configure redirect URIs\n5. Create client secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"],
+      "additionalSettings": {
+        "tenant": "common"
+      }
+    },
+    "auth0": {
+      "id": "auth0",
+      "name": "Auth0",
+      "description": "Auth0's OAuth 2.0 and OpenID Connect implementation",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://{domain}/authorize",
+      "tokenUrl": "https://{domain}/oauth/token",
+      "revocationUrl": "https://{domain}/oauth/revoke",
+      "userInfoUrl": "https://{domain}/userinfo",
+      "jwksUri": "https://{domain}/.well-known/jwks.json",
+      "discoveryUrl": "https://{domain}/.well-known/openid-configuration",
+      "deviceAuthorizationUrl": "https://{domain}/oauth/device/code",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "password", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid profile email offline_access",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://auth0.com/docs/api/authentication",
+      "setupInstructions": "1. Create Auth0 account\n2. Create new application\n3. Note your domain\n4. Configure callback URLs\n5. Copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri", "domain"],
+      "additionalSettings": {
+        "domain": "{tenant}.auth0.com"
+      }
+    },
+    "okta": {
+      "id": "okta",
+      "name": "Okta",
+      "description": "Okta's OAuth 2.0 and OpenID Connect implementation",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://{domain}/oauth2/default/v1/authorize",
+      "tokenUrl": "https://{domain}/oauth2/default/v1/token",
+      "revocationUrl": "https://{domain}/oauth2/default/v1/revoke",
+      "introspectionUrl": "https://{domain}/oauth2/default/v1/introspect",
+      "userInfoUrl": "https://{domain}/oauth2/default/v1/userinfo",
+      "jwksUri": "https://{domain}/oauth2/default/v1/keys",
+      "discoveryUrl": "https://{domain}/oauth2/default/.well-known/openid-configuration",
+      "deviceAuthorizationUrl": "https://{domain}/oauth2/default/v1/device/authorize",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "password", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt", "none"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid profile email offline_access",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://developer.okta.com/docs/reference/api/oidc/",
+      "setupInstructions": "1. Sign up for Okta developer account\n2. Create new application\n3. Note your Okta domain\n4. Configure sign-in redirect URIs\n5. Copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri", "domain"],
+      "additionalSettings": {
+        "domain": "{tenant}.okta.com"
+      }
+    },
+    "keycloak": {
+      "id": "keycloak",
+      "name": "Keycloak",
+      "description": "Open Source Identity and Access Management",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/auth",
+      "tokenUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/token",
+      "revocationUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/revoke",
+      "introspectionUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/token/introspect",
+      "userInfoUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/userinfo",
+      "jwksUri": "https://{domain}/realms/{realm}/protocol/openid-connect/certs",
+      "discoveryUrl": "https://{domain}/realms/{realm}/.well-known/openid-configuration",
+      "deviceAuthorizationUrl": "https://{domain}/realms/{realm}/protocol/openid-connect/auth/device",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit", "urn:ietf:params:oauth:grant-type:device_code"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt"],
+      "pkce": {
+        "required": false,
+        "methods": ["S256", "plain"]
+      },
+      "scope": "openid profile email",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://www.keycloak.org/documentation",
+      "setupInstructions": "1. Install and start Keycloak\n2. Create a realm\n3. Create a client\n4. Configure redirect URIs\n5. Note client ID and secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri", "domain", "realm"],
+      "additionalSettings": {
+        "realm": "master"
+      }
+    },
+    "aws-cognito": {
+      "id": "aws-cognito",
+      "name": "AWS Cognito",
+      "description": "Amazon Cognito User Pools OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://{domain}.auth.{region}.amazoncognito.com/oauth2/authorize",
+      "tokenUrl": "https://{domain}.auth.{region}.amazoncognito.com/oauth2/token",
+      "revocationUrl": "https://{domain}.auth.{region}.amazoncognito.com/oauth2/revoke",
+      "userInfoUrl": "https://{domain}.auth.{region}.amazoncognito.com/oauth2/userInfo",
+      "jwksUri": "https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json",
+      "discoveryUrl": "https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/openid-configuration",
+      "supportedGrantTypes": ["authorization_code", "client_credentials", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post", "client_secret_basic"],
+      "pkce": {
+        "required": true,
+        "methods": ["S256"]
+      },
+      "scope": "openid profile email",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/",
+      "setupInstructions": "1. Create User Pool in AWS Console\n2. Configure app client\n3. Set up hosted UI domain\n4. Configure callback URLs\n5. Note pool ID, client ID, and secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri", "domain", "region", "userPoolId"],
+      "additionalSettings": {
+        "region": "us-east-1"
+      }
+    },
+    "linkedin": {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "description": "LinkedIn OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://www.linkedin.com/oauth/v2/authorization",
+      "tokenUrl": "https://www.linkedin.com/oauth/v2/accessToken",
+      "introspectionUrl": "https://www.linkedin.com/oauth/v2/introspectToken",
+      "userInfoUrl": "https://api.linkedin.com/v2/me",
+      "supportedGrantTypes": ["authorization_code", "refresh_token"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false
+      },
+      "scope": "r_liteprofile r_emailaddress",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://docs.microsoft.com/en-us/linkedin/shared/authentication/",
+      "setupInstructions": "1. Create LinkedIn app\n2. Verify your app\n3. Request OAuth 2.0 scopes\n4. Add redirect URLs\n5. Copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "facebook": {
+      "id": "facebook",
+      "name": "Facebook",
+      "description": "Facebook OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://www.facebook.com/v12.0/dialog/oauth",
+      "tokenUrl": "https://graph.facebook.com/v12.0/oauth/access_token",
+      "userInfoUrl": "https://graph.facebook.com/me",
+      "supportedGrantTypes": ["authorization_code"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false
+      },
+      "scope": "email public_profile",
+      "responseType": "code",
+      "responseMode": "query",
+      "customAuthParams": {
+        "display": "page"
+      },
+      "documentationUrl": "https://developers.facebook.com/docs/facebook-login/",
+      "setupInstructions": "1. Create Facebook app\n2. Add Facebook Login product\n3. Configure OAuth redirect URIs\n4. Copy App ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    },
+    "slack": {
+      "id": "slack",
+      "name": "Slack",
+      "description": "Slack OAuth 2.0",
+      "oauthVersion": "2.0",
+      "authorizationUrl": "https://slack.com/oauth/v2/authorize",
+      "tokenUrl": "https://slack.com/api/oauth.v2.access",
+      "revocationUrl": "https://slack.com/api/auth.revoke",
+      "supportedGrantTypes": ["authorization_code"],
+      "supportedAuthMethods": ["client_secret_post"],
+      "pkce": {
+        "required": false
+      },
+      "scope": "openid email profile",
+      "responseType": "code",
+      "responseMode": "query",
+      "documentationUrl": "https://api.slack.com/authentication/oauth-v2",
+      "setupInstructions": "1. Create Slack app\n2. Add OAuth & Permissions\n3. Add redirect URLs\n4. Configure scopes\n5. Copy Client ID and Secret",
+      "requiredFields": ["clientId", "clientSecret", "redirectUri"]
+    }
+  }
+}

@@ -23,5 +23,15 @@ export { StateManager } from './utils/StateManager.js';
 export { CallbackServer } from './utils/CallbackServer.js';
 export * from './utils/Validators.js';
 
+// Configuration
+export { ConfigLoader } from './config/ConfigLoader.js';
+export { ProviderConfigManager } from './providers/ProviderConfig.js';
+export type {
+  AppConfig,
+  ProviderConfig,
+  ProviderPreset,
+  ValidationResult,
+} from './config/schema.js';
+
 // Types
 export * from './types/index.js';
