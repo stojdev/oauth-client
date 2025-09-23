@@ -16,11 +16,11 @@ coverage/
 # Logs
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+
+# Package manager files (only pnpm allowed)
+package-lock.json
+yarn.lock
 
 # Environment variables
 .env
