@@ -6,71 +6,130 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 import { logger } from '../utils/Logger.js';
-import { ClientCredentialsGrant } from '../grants/ClientCredentials.js';
 import tokenManager from '../core/TokenManager.js';
-import type { OAuthConfig } from '../types/index.js';
+import { authCommand } from './commands/auth.js';
+import { tokenCommand } from './commands/token.js';
+import { inspectCommand } from './commands/inspect.js';
+import { refreshCommand } from './commands/refresh.js';
+import { configInitCommand, configAddCommand, configListCommand } from './commands/config.js';
 
 // Load environment variables
 dotenv.config();
 
 const program = new Command();
 
-program.name('oauth-client').description('OAuth 2.0 Test Client').version('1.0.0');
+program.name('oauth').description('OAuth 2.0 Test Client').version('1.0.0');
 
-// Test command for client credentials
+// Auth command - authenticate with a provider
 program
-  .command('test-client-credentials')
-  .description('Test client credentials grant type')
-  .requiredOption('-c, --client-id <id>', 'OAuth client ID')
-  .requiredOption('-s, --client-secret <secret>', 'OAuth client secret')
-  .requiredOption('-t, --token-url <url>', 'Token endpoint URL')
-  .option('-o, --scope <scope>', 'OAuth scope')
-  .action(async (options) => {
-    try {
-      console.log(chalk.blue('Testing Client Credentials Grant...'));
+  .command('auth <provider>')
+  .description('Authenticate with a provider')
+  .option('-g, --grant <type>', 'Grant type to use')
+  .option('-c, --config <file>', 'Configuration file')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .option('-u, --username <username>', 'Username (for password grant)')
+  .option('-p, --password <password>', 'Password (for password grant)')
+  .option('-s, --scope <scope>', 'OAuth scope')
+  .option('--no-save', 'Do not save token')
+  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .action(authCommand);
 
-      const config: OAuthConfig = {
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        tokenUrl: options.tokenUrl,
-        authorizationUrl: '', // Not needed for client credentials
-        scope: options.scope,
-      };
+// Token command - request token with specific grant
+program
+  .command('token <grant-type>')
+  .description('Request token using specific grant type')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .option('--token-url <url>', 'Token endpoint URL')
+  .option('--authorization-url <url>', 'Authorization endpoint URL')
+  .option('--device-authorization-url <url>', 'Device authorization URL')
+  .option('--redirect-uri <uri>', 'Redirect URI')
+  .option('-u, --username <username>', 'Username (for password grant)')
+  .option('-p, --password <password>', 'Password (for password grant)')
+  .option('--refresh-token <token>', 'Refresh token')
+  .option('-s, --scope <scope>', 'OAuth scope')
+  .option('--code <code>', 'Authorization code')
+  .option('--no-pkce', 'Disable PKCE')
+  .option('--save <name>', 'Save token with name')
+  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .action(tokenCommand);
 
-      const client = new ClientCredentialsGrant(config);
-      const token = await client.getAccessToken();
+// Refresh command
+program
+  .command('refresh [token-or-provider]')
+  .description('Refresh an access token')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .option('--token-url <url>', 'Token endpoint URL')
+  .option('--no-save', 'Do not save refreshed token')
+  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .action(refreshCommand);
 
-      console.log(chalk.green('✓ Successfully obtained access token!'));
-      console.log(chalk.gray('Token Type:'), token.token_type);
-      console.log(chalk.gray('Access Token:'), token.access_token.substring(0, 20) + '...');
+// Inspect command
+program
+  .command('inspect [token]')
+  .description('Decode and inspect a JWT token')
+  .option('-p, --provider <name>', 'Get token from provider')
+  .option('-r, --raw', 'Show raw token parts')
+  .option('-v, --validate', 'Validate token structure')
+  .action(inspectCommand);
 
-      if (token.expires_in) {
-        console.log(chalk.gray('Expires In:'), token.expires_in, 'seconds');
-      }
+// Revoke command (placeholder)
+program
+  .command('revoke <token>')
+  .description('Revoke a token')
+  .option('--revocation-url <url>', 'Revocation endpoint URL')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .action(() => {
+    console.log(chalk.yellow('Token revocation not yet implemented'));
+  });
 
-      if (token.scope) {
-        console.log(chalk.gray('Scope:'), token.scope);
-      }
+// Config init command
+program
+  .command('config:init')
+  .description('Initialize configuration file')
+  .option('-f, --file <path>', 'Configuration file path')
+  .option('-i, --interactive', 'Interactive mode')
+  .action(configInitCommand);
 
-      // Store token
-      await tokenManager.storeToken('test', token);
-      console.log(chalk.green('✓ Token stored successfully'));
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(chalk.red('✗ Failed to obtain token:'), errorMessage);
-      if (error && typeof error === 'object' && 'description' in error) {
-        console.error(
-          chalk.gray('Description:'),
-          String((error as Record<string, unknown>).description),
-        );
-      }
-      process.exit(1);
-    }
+// Config add command
+program
+  .command('config:add <provider>')
+  .description('Add provider to configuration')
+  .option('-f, --file <path>', 'Configuration file path')
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .option('--token-url <url>', 'Token endpoint URL')
+  .option('--authorization-url <url>', 'Authorization endpoint URL')
+  .option('-i, --interactive', 'Interactive mode')
+  .action(configAddCommand);
+
+// Config list command
+program
+  .command('config:list')
+  .description('List configured providers')
+  .option('-f, --file <path>', 'Configuration file path')
+  .action(configListCommand);
+
+// Test command (comprehensive testing)
+program
+  .command('test <provider>')
+  .description('Run comprehensive tests for a provider')
+  .option('-c, --config <file>', 'Configuration file')
+  .option('-g, --grants <grants>', 'Comma-separated grant types to test')
+  .option('-v, --verbose', 'Verbose output')
+  .action((provider, options) => {
+    console.log(chalk.blue(`Testing provider: ${provider}`));
+    console.log(chalk.yellow('Comprehensive testing not yet implemented'));
+    console.log(chalk.gray('Grants to test:'), options.grants || 'all');
   });
 
 // List stored tokens
 program
-  .command('list-tokens')
+  .command('tokens:list')
+  .alias('list-tokens')
   .description('List all stored tokens')
   .action(async () => {
     const providers = tokenManager.listProviders();
@@ -91,20 +150,47 @@ program
 
 // Clear tokens
 program
-  .command('clear-tokens')
+  .command('tokens:clear')
+  .alias('clear-tokens')
   .description('Clear all stored tokens')
   .action(async () => {
     await tokenManager.clearAll();
     console.log(chalk.green('✓ All tokens cleared'));
   });
 
+// Remove token
+program
+  .command('tokens:remove <provider>')
+  .description('Remove token for a specific provider')
+  .action(async (provider) => {
+    try {
+      await tokenManager.deleteToken(provider);
+      console.log(chalk.green(`✓ Token removed for provider: ${provider}`));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(chalk.red('✗ Failed to remove token:'), errorMessage);
+      process.exit(1);
+    }
+  });
+
 // Set log level
 program
-  .command('set-log-level <level>')
+  .command('log-level <level>')
   .description('Set logging level (error, warn, info, debug)')
   .action((level) => {
     logger.level = level;
     console.log(chalk.green(`✓ Log level set to: ${level}`));
+  });
+
+// Interactive mode (placeholder)
+program
+  .command('interactive')
+  .alias('i')
+  .description('Start interactive mode')
+  .action(() => {
+    console.log(chalk.blue('Starting interactive mode...'));
+    console.log(chalk.yellow('Interactive mode not yet fully implemented'));
+    console.log(chalk.gray('Use individual commands with --interactive flag for now'));
   });
 
 program.parse(process.argv);

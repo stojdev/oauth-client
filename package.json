@@ -43,6 +43,7 @@
     "@eslint/js": "^9.36.0",
     "@jest/globals": "^30.1.2",
     "@jest/types": "^30.0.5",
+    "@types/inquirer": "^9.0.9",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/jsonwebtoken": "^9.0.10",
@@ -67,6 +68,7 @@
     "chalk": "^5.6.2",
     "commander": "^14.0.1",
     "dotenv": "^17.2.2",
+    "inquirer": "^12.9.6",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "winston": "^3.17.0"

@@ -144,17 +144,15 @@ src/
 - [ ] Add command history
 
 ### 4.2 CLI Commands
-```bash
-oauth auth <provider> [options]     # Authenticate with provider
-oauth token <grant-type> [options]  # Request token using specific grant
-oauth refresh <token>               # Refresh access token
-oauth inspect <token>               # Decode and display token
-oauth revoke <token>                # Revoke token
-oauth config init                   # Initialize configuration
-oauth config add <provider>         # Add provider configuration
-oauth config list                   # List configured providers
-oauth test <provider>               # Run comprehensive tests
-```
+- [x] `oauth auth <provider> [options]`     # Authenticate with provider
+- [x] `oauth token <grant-type> [options]`  # Request token using specific grant
+- [x] `oauth refresh <token>`               # Refresh access token
+- [x] `oauth inspect <token>`               # Decode and display token
+- [ ] `oauth revoke <token>`                # Revoke token (placeholder)
+- [x] `oauth config:init`                   # Initialize configuration
+- [x] `oauth config:add <provider>`         # Add provider configuration
+- [x] `oauth config:list`                   # List configured providers
+- [ ] `oauth test <provider>`               # Run comprehensive tests (placeholder)
 
 ### 4.3 Interactive Features
 - [ ] Add provider selection menu
@@ -166,6 +164,7 @@ oauth test <provider>               # Run comprehensive tests
 ## Phase 5: Provider Support (Week 5)
 
 ### 5.1 Provider Templates
+- [ ] ServiceNow
 - [ ] Google OAuth 2.0
 - [ ] Microsoft Identity Platform
 - [ ] GitHub OAuth
