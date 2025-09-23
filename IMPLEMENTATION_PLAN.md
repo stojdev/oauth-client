@@ -161,7 +161,7 @@ src/
 - [x] Implement grant type selector
 - [x] Create scope builder interface
 - [x] Add token display formatting
-- [ ] Implement copy-to-clipboard
+- [x] Implement copy-to-clipboard
 
 ## Phase 5: Provider Support (Week 5)
 

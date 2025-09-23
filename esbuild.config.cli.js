@@ -7,7 +7,7 @@ const dependencies = Object.keys(pkg.dependencies || {});
 
 // Remove ESM-only packages from external list so they get bundled
 const externalDeps = dependencies.filter(dep =>
-  !['chalk', 'inquirer'].includes(dep)
+  !['chalk', 'inquirer', 'clipboardy'].includes(dep)
 );
 
 const buildOptions = {

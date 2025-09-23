@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { JWTDecoder } from '../../utils/JWTDecoder.js';
 import tokenManager from '../../core/TokenManager.js';
+import { ClipboardManager } from '../../utils/Clipboard.js';
 
 /**
  * Inspect and decode a token
@@ -47,6 +48,14 @@ export async function inspectCommand(
           console.log(chalk.red(`  - ${error}`));
         });
       }
+    }
+
+    // Offer to copy decoded payload to clipboard
+    const decoded = JWTDecoder.decode(tokenToInspect);
+    if (decoded) {
+      console.log();
+      const payloadString = JSON.stringify(decoded.payload, null, 2);
+      await ClipboardManager.copyWithFeedback(payloadString, 'Decoded JWT payload');
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

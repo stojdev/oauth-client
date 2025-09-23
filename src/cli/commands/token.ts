@@ -186,6 +186,11 @@ export async function tokenCommand(
       if (token.refresh_token) {
         console.log(chalk.gray('Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
       }
+
+      // Offer to copy token to clipboard
+      const { ClipboardManager } = await import('../../utils/Clipboard.js');
+      console.log();
+      await ClipboardManager.copyToken(token.access_token, 'Access token');
     }
 
     // Save token if requested

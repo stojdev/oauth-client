@@ -430,9 +430,7 @@ export class InteractiveCLI {
     try {
       this.addToHistory(`token ${grantType}`, 'success');
       await tokenCommand(grantType, options);
-
-      // Offer to copy token
-      await this.offerTokenCopy();
+      // Token command already handles clipboard copy
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       this.addToHistory(`token ${grantType}`, `error: ${errorMsg}`);
@@ -812,8 +810,9 @@ export class InteractiveCLI {
   /**
    * Offer to copy token to clipboard
    */
-  private async offerTokenCopy(): Promise<void> {
-    // Check if clipboard is available
+  private async offerTokenCopy(token?: string): Promise<void> {
+    if (!token) return;
+
     try {
       const { copy } = await inquirer.prompt([
         {
@@ -825,8 +824,8 @@ export class InteractiveCLI {
       ]);
 
       if (copy) {
-        console.log(chalk.yellow('ℹ Clipboard copy requires manual implementation'));
-        console.log(chalk.gray('Token displayed above can be selected and copied manually'));
+        const { ClipboardManager } = await import('../../utils/Clipboard.js');
+        await ClipboardManager.copyToken(token, 'Access token');
       }
     } catch {
       // Ignore clipboard errors
