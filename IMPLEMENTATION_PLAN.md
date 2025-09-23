@@ -43,16 +43,18 @@ src/
 ├── providers/
 │   ├── ProviderConfig.ts       ✅ Provider configuration interface
 │   ├── providers.json          ✅ Provider presets (10+ providers)
-│   └── CustomProvider.ts       # Custom provider handler
+│   └── CustomProvider.ts       ✅ Custom provider handler
 ├── utils/
 │   ├── PKCEGenerator.ts        ✅ PKCE challenge/verifier
 │   ├── StateManager.ts         ✅ OAuth state management
 │   ├── Logger.ts               ✅ Logging utility
-│   └── Validators.ts           ✅ Input validators
+│   ├── Validators.ts           ✅ Input validators
+│   ├── JWTDecoder.ts           ✅ JWT token decoder
+│   └── ScopeBuilder.ts         ✅ OAuth scope builder
 ├── cli/
 │   ├── index.ts                ✅ CLI entry point
-│   ├── commands/               # CLI command handlers
-│   └── interactive.ts          # Interactive mode
+│   ├── commands/               ✅ CLI command handlers
+│   └── interactive.ts          ✅ Interactive mode
 ├── config/
 │   ├── ConfigLoader.ts         ✅ Configuration loader
 │   └── schema.ts               ✅ Config validation schema
@@ -140,25 +142,25 @@ src/
 - [x] Create main CLI entry point
 - [x] Implement command parser
 - [x] Add help documentation
-- [ ] Create interactive mode
-- [ ] Add command history
+- [x] Create interactive mode
+- [x] Add command history
 
 ### 4.2 CLI Commands
 - [x] `oauth auth <provider> [options]`     # Authenticate with provider
 - [x] `oauth token <grant-type> [options]`  # Request token using specific grant
 - [x] `oauth refresh <token>`               # Refresh access token
 - [x] `oauth inspect <token>`               # Decode and display token
-- [ ] `oauth revoke <token>`                # Revoke token (placeholder)
+- [x] `oauth revoke <token>`                # Revoke token
 - [x] `oauth config:init`                   # Initialize configuration
 - [x] `oauth config:add <provider>`         # Add provider configuration
 - [x] `oauth config:list`                   # List configured providers
-- [ ] `oauth test <provider>`               # Run comprehensive tests (placeholder)
+- [x] `oauth test <provider>`               # Run comprehensive tests
 
 ### 4.3 Interactive Features
-- [ ] Add provider selection menu
-- [ ] Implement grant type selector
-- [ ] Create scope builder interface
-- [ ] Add token display formatting
+- [x] Add provider selection menu
+- [x] Implement grant type selector
+- [x] Create scope builder interface
+- [x] Add token display formatting
 - [ ] Implement copy-to-clipboard
 
 ## Phase 5: Provider Support (Week 5)

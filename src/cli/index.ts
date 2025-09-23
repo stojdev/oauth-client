@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /* eslint-disable no-console */
 
 import { Command } from 'commander';
@@ -75,15 +73,16 @@ program
   .option('-v, --validate', 'Validate token structure')
   .action(inspectCommand);
 
-// Revoke command (placeholder)
+// Revoke command
 program
   .command('revoke <token>')
   .description('Revoke a token')
   .option('--revocation-url <url>', 'Revocation endpoint URL')
   .option('--client-id <id>', 'OAuth client ID')
   .option('--client-secret <secret>', 'OAuth client secret')
-  .action(() => {
-    console.log(chalk.yellow('Token revocation not yet implemented'));
+  .action(async (token, options) => {
+    const { revokeCommand } = await import('./commands/revoke.js');
+    await revokeCommand(token, options);
   });
 
 // Config init command
@@ -120,10 +119,11 @@ program
   .option('-c, --config <file>', 'Configuration file')
   .option('-g, --grants <grants>', 'Comma-separated grant types to test')
   .option('-v, --verbose', 'Verbose output')
-  .action((provider, options) => {
-    console.log(chalk.blue(`Testing provider: ${provider}`));
-    console.log(chalk.yellow('Comprehensive testing not yet implemented'));
-    console.log(chalk.gray('Grants to test:'), options.grants || 'all');
+  .option('--client-id <id>', 'OAuth client ID')
+  .option('--client-secret <secret>', 'OAuth client secret')
+  .action(async (provider, options) => {
+    const { testCommand } = await import('./commands/test.js');
+    await testCommand(provider, options);
   });
 
 // List stored tokens
@@ -182,15 +182,14 @@ program
     console.log(chalk.green(`✓ Log level set to: ${level}`));
   });
 
-// Interactive mode (placeholder)
+// Interactive mode
 program
   .command('interactive')
   .alias('i')
   .description('Start interactive mode')
-  .action(() => {
-    console.log(chalk.blue('Starting interactive mode...'));
-    console.log(chalk.yellow('Interactive mode not yet fully implemented'));
-    console.log(chalk.gray('Use individual commands with --interactive flag for now'));
+  .action(async () => {
+    const { interactiveCommand } = await import('./commands/interactive.js');
+    await interactiveCommand();
   });
 
 program.parse(process.argv);

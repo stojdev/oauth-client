@@ -1,12 +1,7 @@
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import type { ProviderConfig, ProviderPreset } from '../config/schema.js';
 import { logger } from '../utils/Logger.js';
-
-// Get current module directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
 /**
  * Provider Configuration Manager
@@ -24,9 +19,45 @@ export class ProviderConfigManager {
    */
   private loadPresets(): void {
     try {
-      const presetsPath = join(__dirname, 'providers.json');
-      const content = readFileSync(presetsPath, 'utf-8');
-      const data = JSON.parse(content);
+      // Try multiple paths to find providers.json
+      const possiblePaths = [
+        resolve(process.cwd(), 'src/providers/providers.json'),
+        resolve(process.cwd(), 'providers.json'),
+        resolve(process.cwd(), 'dist/providers.json'),
+      ];
+
+      let data: any;
+      for (const path of possiblePaths) {
+        try {
+          const content = readFileSync(path, 'utf-8');
+          data = JSON.parse(content);
+          break;
+        } catch {
+          // Try next path
+        }
+      }
+
+      if (!data) {
+        // Use hardcoded minimal presets as fallback
+        data = {
+          providers: {
+            google: {
+              id: 'google',
+              name: 'Google OAuth 2.0',
+              authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+              tokenUrl: 'https://oauth2.googleapis.com/token',
+              requiredFields: ['clientId', 'clientSecret', 'redirectUri'],
+            },
+            github: {
+              id: 'github',
+              name: 'GitHub OAuth',
+              authorizationUrl: 'https://github.com/login/oauth/authorize',
+              tokenUrl: 'https://github.com/login/oauth/access_token',
+              requiredFields: ['clientId', 'clientSecret', 'redirectUri'],
+            },
+          },
+        };
+      }
 
       for (const [key, preset] of Object.entries(data.providers)) {
         this.presets.set(key, preset as ProviderPreset);

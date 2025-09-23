@@ -6,13 +6,17 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "oauth-client": "dist/cli/index.js"
+    "oauth": "dist/cli.cjs",
+    "oauth-client": "dist/cli.cjs"
   },
   "scripts": {
-    "build": "node esbuild.config.js",
+    "build": "node esbuild.config.js && node esbuild.config.cli.js",
+    "build:lib": "node esbuild.config.js",
+    "build:cli": "node esbuild.config.cli.js",
     "build:tsc": "tsc",
     "build:watch": "node esbuild.config.js --watch",
     "start": "node dist/index.js",
+    "cli": "node --loader ./loader.mjs dist/cli/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",

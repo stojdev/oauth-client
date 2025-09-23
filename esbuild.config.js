@@ -1,8 +1,8 @@
 import * as esbuild from 'esbuild';
 
 const buildOptions = {
-  entryPoints: ['./src/index.ts', './src/cli/index.ts'],
-  outdir: 'dist',
+  entryPoints: ['./src/index.ts'],
+  outfile: 'dist/index.js',
   bundle: true,
   platform: 'node',
   target: 'node18',
@@ -10,17 +10,8 @@ const buildOptions = {
   format: 'esm',
   minify: process.env.NODE_ENV === 'production',
   logLevel: 'info',
-  splitting: true,
-  banner: {
-    js: `import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const require = createRequire(import.meta.url);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-`,
-  },
+  // Don't bundle dependencies for the library
+  packages: 'external',
 };
 
 async function build() {
