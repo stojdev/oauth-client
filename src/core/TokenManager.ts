@@ -2,7 +2,7 @@ import { promises as fs, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import os from 'os';
-import { logger } from '../utils/Logger.js';
+import { logger, AuditLogger, PerformanceLogger } from '../utils/Logger.js';
 import { isTokenExpired, calculateExpiryTime } from '../utils/Validators.js';
 import type { TokenResponse, StoredToken } from '../types/index.js';
 
@@ -30,6 +30,8 @@ export class TokenManager {
    * Store a token
    */
   async storeToken(provider: string, token: TokenResponse): Promise<void> {
+    PerformanceLogger.start('token_store');
+
     const storedToken: StoredToken = {
       ...token,
       provider,
@@ -40,7 +42,20 @@ export class TokenManager {
     this.tokens.set(provider, storedToken);
     await this.persistTokens();
 
-    logger.info(`Token stored for provider: ${provider}`);
+    logger.info('Token stored successfully', {
+      provider,
+      tokenType: token.token_type,
+      expiresIn: token.expires_in,
+      hasRefreshToken: !!token.refresh_token,
+    });
+
+    AuditLogger.logTokenOperation('STORE', {
+      provider,
+      tokenType: token.token_type,
+      expiresIn: token.expires_in,
+    });
+
+    PerformanceLogger.end('token_store', { provider });
   }
 
   /**
@@ -50,15 +65,30 @@ export class TokenManager {
     const token = this.tokens.get(provider);
 
     if (!token) {
+      logger.debug('Token not found', { provider });
       return null;
     }
 
     if (isTokenExpired(token.expiresAt)) {
-      logger.warn(`Token expired for provider: ${provider}`);
+      logger.warn('Token expired', {
+        provider,
+        expiredAt: token.expiresAt ? new Date(token.expiresAt).toISOString() : 'unknown',
+      });
+
+      AuditLogger.logTokenOperation('EXPIRED', {
+        provider,
+        expiredAt: token.expiresAt ? new Date(token.expiresAt).toISOString() : 'unknown',
+      });
+
       this.tokens.delete(provider);
       await this.persistTokens();
       return null;
     }
+
+    AuditLogger.logTokenOperation('RETRIEVE', {
+      provider,
+      tokenType: token.token_type,
+    });
 
     return token;
   }
@@ -67,18 +97,40 @@ export class TokenManager {
    * Delete a token
    */
   async deleteToken(provider: string): Promise<void> {
+    const hadToken = this.tokens.has(provider);
     this.tokens.delete(provider);
     await this.persistTokens();
-    logger.info(`Token deleted for provider: ${provider}`);
+
+    if (hadToken) {
+      logger.info('Token deleted', { provider });
+
+      AuditLogger.logTokenOperation('DELETE', {
+        provider,
+        success: true,
+      });
+    } else {
+      logger.debug('Token not found for deletion', { provider });
+    }
   }
 
   /**
    * Clear all tokens
    */
   async clearAll(): Promise<void> {
+    const tokenCount = this.tokens.size;
+    const providers = Array.from(this.tokens.keys());
+
     this.tokens.clear();
     await this.persistTokens();
-    logger.info('All tokens cleared');
+
+    logger.info('All tokens cleared', { count: tokenCount });
+
+    if (tokenCount > 0) {
+      AuditLogger.logTokenOperation('CLEAR_ALL', {
+        count: tokenCount,
+        providers,
+      });
+    }
   }
 
   /**
