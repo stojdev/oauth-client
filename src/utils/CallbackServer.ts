@@ -7,6 +7,7 @@ export interface CallbackResult {
   state?: string;
   error?: string;
   error_description?: string;
+  fragment?: string; // For Implicit flow
 }
 
 /**
@@ -18,11 +19,14 @@ export class CallbackServer {
   private hostname: string;
   private path: string;
 
-  constructor(redirectUri?: string) {
+  private handleFragment: boolean;
+
+  constructor(redirectUri?: string, handleFragment = false) {
     const url = new URL(redirectUri || 'http://localhost:8080/callback');
     this.hostname = url.hostname;
     this.port = parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80);
     this.path = url.pathname;
+    this.handleFragment = handleFragment;
   }
 
   /**
@@ -52,6 +56,36 @@ export class CallbackServer {
           error: params.get('error') || undefined,
           error_description: params.get('error_description') || undefined,
         };
+
+        // For Implicit flow, we need to handle fragments via JavaScript
+        const fragmentScript = this.handleFragment
+          ? `
+              <script>
+                // Check for fragment (Implicit flow)
+                if (window.location.hash) {
+                  // Send fragment to server
+                  fetch(window.location.pathname + '?fragment=' + encodeURIComponent(window.location.hash.substring(1)))
+                    .then(() => {
+                      document.getElementById('status').innerHTML = '<h1 class="success">✅ Token Received</h1><p>You can now close this window and return to the terminal.</p>';
+                    })
+                    .catch(() => {
+                      document.getElementById('status').innerHTML = '<h1 class="error">❌ Failed to process token</h1>';
+                    });
+                }
+              </script>
+            `
+          : '';
+
+        // Check if this is a fragment callback
+        if (params.has('fragment')) {
+          result.fragment = params.get('fragment') || undefined;
+          res.writeHead(200);
+          res.end('OK');
+          clearTimeout(timeoutId);
+          this.stop();
+          resolve(result);
+          return;
+        }
 
         // Send success response to browser
         const html = `
@@ -95,7 +129,7 @@ export class CallbackServer {
             </style>
           </head>
           <body>
-            <div class="container">
+            <div class="container" id="status">
               ${
                 result.error
                   ? `
@@ -112,6 +146,7 @@ export class CallbackServer {
                 setTimeout(() => window.close(), 5000);
               </script>
             </div>
+            ${fragmentScript}
           </body>
           </html>
         `;

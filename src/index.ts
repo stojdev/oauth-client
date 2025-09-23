@@ -12,6 +12,7 @@ export { ErrorHandler, OAuthClientError, OAuthErrorCode } from './core/ErrorHand
 export { AuthorizationCodeGrant } from './grants/AuthorizationCode.js';
 export { ClientCredentialsGrant } from './grants/ClientCredentials.js';
 export { DeviceAuthorizationGrant } from './grants/DeviceAuthorization.js';
+export { ImplicitGrant } from './grants/Implicit.js';
 export { ResourceOwnerPasswordGrant } from './grants/ResourceOwnerPassword.js';
 export { RefreshTokenGrant } from './grants/RefreshToken.js';
 
