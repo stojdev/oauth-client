@@ -86,9 +86,9 @@ src/
 ### 2.4 Security Utilities
 - [x] Implement PKCE generator (code challenge/verifier)
 - [x] Create state parameter management
-- [ ] Add nonce generation for OpenID Connect
+- [x] Add nonce generation for OpenID Connect
 - [x] Implement secure random string generation
-- [ ] Add JWT token decoder (for inspection)
+- [x] Add JWT token decoder (for inspection)
 
 ## Phase 3: Grant Type Implementations (Week 3-4)
 

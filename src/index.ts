@@ -21,6 +21,8 @@ export { logger } from './utils/Logger.js';
 export * from './utils/PKCEGenerator.js';
 export { StateManager } from './utils/StateManager.js';
 export { CallbackServer } from './utils/CallbackServer.js';
+export { JWTDecoder } from './utils/JWTDecoder.js';
+export type { DecodedJWT, JWTHeader, JWTPayload } from './utils/JWTDecoder.js';
 export * from './utils/Validators.js';
 
 // Configuration
