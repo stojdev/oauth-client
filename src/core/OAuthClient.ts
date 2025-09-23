@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { logger } from '../utils/Logger.js';
 import { validateOAuthConfig, validateTokenResponse } from '../utils/Validators.js';
-import type { OAuthConfig, TokenResponse, OAuthError, GrantType } from '../types/index.js';
+import { GrantType } from '../types/index.js';
+import type { OAuthConfig, TokenResponse, OAuthError } from '../types/index.js';
 
 /**
  * Base OAuth 2.0 Client
@@ -114,23 +115,27 @@ export abstract class OAuthClient {
    * Revoke a token
    */
   async revokeToken(
-    token: string,
-    tokenType: 'access_token' | 'refresh_token' = 'access_token',
+    _token: string,
+    _tokenType: 'access_token' | 'refresh_token' = 'access_token',
   ): Promise<void> {
     // This would need a revocation endpoint configured
+    // _token and _tokenType would be used when revocation is implemented
     throw new Error('Token revocation not implemented');
   }
 
   /**
    * Extract OAuth error from response
    */
-  protected extractOAuthError(data: any): OAuthError {
-    if (data && typeof data === 'object' && data.error) {
+  protected extractOAuthError(data: unknown): OAuthError {
+    if (data && typeof data === 'object' && 'error' in data) {
+      const errorData = data as Record<string, unknown>;
       return {
-        error: data.error,
-        error_description: data.error_description,
-        error_uri: data.error_uri,
-        state: data.state,
+        error: String(errorData.error),
+        error_description: errorData.error_description
+          ? String(errorData.error_description)
+          : undefined,
+        error_uri: errorData.error_uri ? String(errorData.error_uri) : undefined,
+        state: errorData.state ? String(errorData.state) : undefined,
       };
     }
 
@@ -143,8 +148,8 @@ export abstract class OAuthClient {
   /**
    * Sanitize headers for logging (remove sensitive data)
    */
-  private sanitizeHeaders(headers: any): any {
-    const sanitized = { ...headers };
+  private sanitizeHeaders(headers: unknown): Record<string, unknown> {
+    const sanitized = { ...(headers as Record<string, unknown>) };
     if (sanitized.authorization) {
       sanitized.authorization = '[REDACTED]';
     }

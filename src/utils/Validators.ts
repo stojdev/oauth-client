@@ -35,7 +35,7 @@ export function validateUrl(url: string, name = 'URL'): void {
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       throw new Error(`${name} must use HTTP or HTTPS protocol`);
     }
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid ${name}: ${url}`);
   }
 }
@@ -43,20 +43,22 @@ export function validateUrl(url: string, name = 'URL'): void {
 /**
  * Validate token response
  */
-export function validateTokenResponse(response: any): TokenResponse {
+export function validateTokenResponse(response: unknown): TokenResponse {
   if (!response || typeof response !== 'object') {
     throw new Error('Invalid token response');
   }
 
-  if (!response.access_token || typeof response.access_token !== 'string') {
+  const tokenResponse = response as Record<string, unknown>;
+
+  if (!tokenResponse.access_token || typeof tokenResponse.access_token !== 'string') {
     throw new Error('Token response missing access_token');
   }
 
-  if (!response.token_type || typeof response.token_type !== 'string') {
+  if (!tokenResponse.token_type || typeof tokenResponse.token_type !== 'string') {
     throw new Error('Token response missing token_type');
   }
 
-  return response as TokenResponse;
+  return tokenResponse as unknown as TokenResponse;
 }
 
 /**

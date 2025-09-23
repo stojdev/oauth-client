@@ -24,7 +24,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage",
     "prebuild": "npm run clean",
-    "pretest": "npm run lint && npm run typecheck"
+    "pretest": "npm run lint && npm run typecheck",
+    "quality-gate": "pnpm run quality-gate:full",
+    "quality-gate:full": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
+    "quality-gate:quick": "pnpm run typecheck && pnpm run lint"
   },
   "keywords": [
     "oauth",

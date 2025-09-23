@@ -76,7 +76,7 @@ export class OAuthClientError extends Error {
   /**
    * Convert to plain object for logging
    */
-  toJSON(): Record<string, any> {
+  toJSON(): Record<string, unknown> {
     return {
       name: this.name,
       code: this.code,
@@ -96,26 +96,39 @@ export class ErrorHandler {
   /**
    * Handle and format OAuth errors
    */
-  static handle(error: any): never {
+  static handle(error: unknown): never {
     if (error instanceof OAuthClientError) {
       logger.error('OAuth error', error.toJSON());
       throw error;
     }
 
-    if (error.response?.data?.error) {
-      const oauthError = new OAuthClientError(error.response.data, error.response.status);
-      logger.error('OAuth error response', oauthError.toJSON());
-      throw oauthError;
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { data?: unknown; status?: number } };
+      if (
+        axiosError.response?.data &&
+        typeof axiosError.response.data === 'object' &&
+        'error' in axiosError.response.data
+      ) {
+        const oauthError = new OAuthClientError(
+          axiosError.response.data as OAuthError,
+          axiosError.response.status,
+        );
+        logger.error('OAuth error response', oauthError.toJSON());
+        throw oauthError;
+      }
     }
 
-    if (error.code === 'ECONNREFUSED') {
-      logger.error('Connection refused', { url: error.config?.url });
-      throw new OAuthClientError('Unable to connect to authorization server');
-    }
+    if (error && typeof error === 'object' && 'code' in error) {
+      const networkError = error as { code?: string; config?: { url?: string } };
+      if (networkError.code === 'ECONNREFUSED') {
+        logger.error('Connection refused', { url: networkError.config?.url });
+        throw new OAuthClientError('Unable to connect to authorization server');
+      }
 
-    if (error.code === 'ETIMEDOUT') {
-      logger.error('Request timeout', { url: error.config?.url });
-      throw new OAuthClientError('Request to authorization server timed out');
+      if (networkError.code === 'ETIMEDOUT') {
+        logger.error('Request timeout', { url: networkError.config?.url });
+        throw new OAuthClientError('Request to authorization server timed out');
+      }
     }
 
     logger.error('Unexpected error', error);

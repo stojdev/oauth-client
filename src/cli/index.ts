@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-disable no-console */
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
@@ -53,10 +55,14 @@ program
       // Store token
       await tokenManager.storeToken('test', token);
       console.log(chalk.green('✓ Token stored successfully'));
-    } catch (error: any) {
-      console.error(chalk.red('✗ Failed to obtain token:'), error.message);
-      if (error.description) {
-        console.error(chalk.gray('Description:'), error.description);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(chalk.red('✗ Failed to obtain token:'), errorMessage);
+      if (error && typeof error === 'object' && 'description' in error) {
+        console.error(
+          chalk.gray('Description:'),
+          String((error as Record<string, unknown>).description),
+        );
       }
       process.exit(1);
     }

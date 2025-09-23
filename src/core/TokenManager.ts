@@ -114,7 +114,7 @@ export class TokenManager {
       const tokensArray = JSON.parse(decrypted);
 
       this.tokens = new Map(tokensArray);
-    } catch (error) {
+    } catch {
       // File doesn't exist or is corrupted - start fresh
       this.tokens = new Map();
     }
@@ -137,7 +137,7 @@ export class TokenManager {
       // Try to read existing key
       const key = readFileSync(keyPath);
       return key;
-    } catch (error) {
+    } catch {
       // Generate new key
       const key = crypto.randomBytes(32);
 

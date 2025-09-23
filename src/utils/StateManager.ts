@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 interface StateData {
   state: string;
-  data?: any;
+  data?: unknown;
   createdAt: number;
   expiresAt: number;
 }
@@ -26,7 +26,7 @@ export class StateManager {
   /**
    * Generate and store a new state
    */
-  create(data?: any): string {
+  create(data?: unknown): string {
     const state = crypto.randomBytes(32).toString('hex');
     const now = Date.now();
 

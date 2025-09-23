@@ -39,6 +39,10 @@ pnpm format
 # Type check
 pnpm typecheck
 
+# Quality gate checks (runs all quality checks)
+pnpm quality-gate        # Full check: typecheck, lint, format, test, build
+pnpm quality-gate:quick  # Quick check: typecheck, lint only
+
 # CLI commands (after building)
 node dist/cli/index.js --help
 node dist/cli/index.js test-client-credentials --help
