@@ -41,10 +41,12 @@ describe('PKCEGenerator', () => {
   });
 
   describe('generateCodeChallenge', () => {
-    it('should return verifier for plain method', () => {
+    it('should reject plain method per RFC 9700', () => {
       const verifier = 'test-verifier';
-      const result = generateCodeChallenge(verifier, 'plain');
-      expect(result).toBe(verifier);
+      expect(() => {
+        // @ts-expect-error Testing runtime rejection of insecure method
+        generateCodeChallenge(verifier, 'plain');
+      }).toThrow(/Only S256 code challenge method is allowed per RFC 9700/);
     });
 
     it('should return base64url encoded SHA256 for S256 method', () => {
@@ -66,10 +68,18 @@ describe('PKCEGenerator', () => {
       expect(result.method).toBe('S256');
     });
 
-    it('should use specified method', () => {
-      const result = generatePKCEChallenge('plain');
-      expect(result.method).toBe('plain');
-      expect(result.codeChallenge).toBe(result.codeVerifier);
+    it('should reject plain method per RFC 9700', () => {
+      expect(() => {
+        // @ts-expect-error Testing runtime rejection of insecure method
+        generatePKCEChallenge('plain');
+      }).toThrow(/Only S256 code challenge method is allowed per RFC 9700/);
+    });
+
+    it('should only support S256 method', () => {
+      const result = generatePKCEChallenge();
+      expect(result.method).toBe('S256');
+      expect(result.codeChallenge).not.toBe(result.codeVerifier);
+      expect(result.codeChallenge.length).toBeGreaterThan(0);
     });
   });
 

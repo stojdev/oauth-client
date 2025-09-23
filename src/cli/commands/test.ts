@@ -3,8 +3,10 @@
 import chalk from 'chalk';
 import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
 import { ConfigLoader } from '../../config/ConfigLoader.js';
-import { OAuthClient } from '../../core/OAuthClient.js';
+import { ClientCredentialsGrant } from '../../grants/ClientCredentials.js';
+import { ResourceOwnerPasswordGrant } from '../../grants/ResourceOwnerPassword.js';
 import { JWTDecoder } from '../../utils/JWTDecoder.js';
+import { JWTVerifier } from '../../utils/JWTVerifier.js';
 import { logger } from '../../utils/Logger.js';
 import type { ProviderConfig } from '../../config/schema.js';
 
@@ -27,7 +29,7 @@ export async function testCommand(
     verbose?: boolean;
     clientId?: string;
     clientSecret?: string;
-  }
+  },
 ): Promise<void> {
   const startTime = Date.now();
   const results: TestResult[] = [];
@@ -42,8 +44,8 @@ export async function testCommand(
 
     if (options.config) {
       const loader = new ConfigLoader();
-      const config = await loader.loadConfig(options.config);
-      const foundProvider = config.providers.find(p => p.id === provider);
+      const config = await loader.load({ configFile: options.config });
+      const foundProvider = config.providers.find((p) => p.id === provider);
 
       if (!foundProvider) {
         throw new Error(`Provider '${provider}' not found in configuration`);
@@ -63,7 +65,7 @@ export async function testCommand(
     let grantTypes: string[] = [];
 
     if (options.grants) {
-      grantTypes = options.grants.split(',').map(g => g.trim());
+      grantTypes = options.grants.split(',').map((g) => g.trim());
     } else if (providerConfig.supportedGrantTypes) {
       grantTypes = providerConfig.supportedGrantTypes;
     } else {
@@ -81,7 +83,7 @@ export async function testCommand(
     console.log();
 
     console.log(chalk.blue('Grant Types to Test:'));
-    grantTypes.forEach(grant => {
+    grantTypes.forEach((grant) => {
       console.log(chalk.gray(`  • ${grant}`));
     });
     console.log();
@@ -97,15 +99,18 @@ export async function testCommand(
     console.log(chalk.blue('Test Summary:'));
     console.log();
 
-    const successCount = results.filter(r => r.status === 'success').length;
-    const failedCount = results.filter(r => r.status === 'failed').length;
-    const skippedCount = results.filter(r => r.status === 'skipped').length;
+    const successCount = results.filter((r) => r.status === 'success').length;
+    const failedCount = results.filter((r) => r.status === 'failed').length;
+    const skippedCount = results.filter((r) => r.status === 'skipped').length;
 
-    results.forEach(result => {
-      const icon = result.status === 'success' ? '✅' :
-                   result.status === 'failed' ? '❌' : '⏭️';
-      const color = result.status === 'success' ? chalk.green :
-                    result.status === 'failed' ? chalk.red : chalk.gray;
+    results.forEach((result) => {
+      const icon = result.status === 'success' ? '✅' : result.status === 'failed' ? '❌' : '⏭️';
+      const color =
+        result.status === 'success'
+          ? chalk.green
+          : result.status === 'failed'
+            ? chalk.red
+            : chalk.gray;
 
       console.log(`${icon} ${color(result.grantType)}`);
       if (result.message) {
@@ -131,7 +136,6 @@ export async function testCommand(
     if (failedCount > 0) {
       process.exit(1);
     }
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(chalk.red('✗ Test execution failed:'), errorMessage);
@@ -143,11 +147,11 @@ export async function testCommand(
  * Test a specific grant type
  */
 async function testGrantType(
-  provider: string,
+  _provider: string,
   grantType: string,
   config: ProviderConfig,
   results: TestResult[],
-  verbose: boolean
+  verbose: boolean,
 ): Promise<void> {
   const startTime = Date.now();
 
@@ -190,25 +194,36 @@ async function testGrantType(
       }
     }
 
-    // Create OAuth client
-    const client = new OAuthClient(config);
-
     // Test based on grant type
-    let token: any;
+    let token: unknown;
 
     switch (grantType) {
-      case 'client_credentials':
+      case 'client_credentials': {
         console.log(chalk.gray('  Testing Client Credentials flow...'));
-        token = await client.clientCredentials();
+        const clientCredentials = new ClientCredentialsGrant({
+          clientId: config.clientId,
+          clientSecret: config.clientSecret!,
+          tokenUrl: config.tokenUrl,
+          authorizationUrl: config.authorizationUrl || '',
+          scope: undefined,
+        });
+        token = await clientCredentials.getAccessToken();
         break;
+      }
 
-      case 'password':
+      case 'password': {
         console.log(chalk.gray('  Testing Resource Owner Password flow...'));
-        token = await client.password(
-          process.env.OAUTH_USERNAME!,
-          process.env.OAUTH_PASSWORD!
-        );
+        const passwordGrant = new ResourceOwnerPasswordGrant({
+          clientId: config.clientId,
+          clientSecret: config.clientSecret!,
+          tokenUrl: config.tokenUrl,
+          authorizationUrl: config.authorizationUrl || '',
+          username: process.env.OAUTH_USERNAME!,
+          password: process.env.OAUTH_PASSWORD!,
+        });
+        token = await passwordGrant.getAccessToken();
         break;
+      }
 
       case 'refresh_token':
         console.log(chalk.yellow('  ⚠ Refresh token requires existing token'));
@@ -233,7 +248,7 @@ async function testGrantType(
     }
 
     // Validate token
-    if (!token || !token.access_token) {
+    if (!token || !(token as Record<string, unknown>).access_token) {
       throw new Error('No access token received');
     }
 
@@ -241,45 +256,85 @@ async function testGrantType(
 
     // Decode and validate JWT if possible
     try {
-      const decoded = JWTDecoder.decode(token.access_token);
-      if (decoded) {
-        console.log(chalk.gray(`  Token type: JWT`));
-        console.log(chalk.gray(`  Issuer: ${decoded.payload.iss || 'N/A'}`));
-        console.log(chalk.gray(`  Subject: ${decoded.payload.sub || 'N/A'}`));
+      // First check if it's a JWT format
+      const verificationResult = await JWTVerifier.verify(
+        (token as Record<string, unknown>).access_token as string,
+        {
+          // For demo purposes, we'll try to get JWKS from provider if available
+          jwksUri: config.discoveryUrl
+            ? `${config.discoveryUrl.replace('/.well-known/openid_configuration', '')}/.well-known/jwks.json`
+            : undefined,
+          // Allow common algorithms
+          algorithms: ['RS256', 'RS384', 'RS512', 'HS256', 'HS384', 'HS512'],
+          // Don't fail on missing audience/issuer for testing
+          ignoreExpiration: false,
+        },
+      );
 
-        if (JWTDecoder.isExpired(decoded)) {
-          console.log(chalk.yellow(`  ⚠ Token is already expired`));
-        } else {
-          const exp = decoded.payload.exp;
-          if (exp) {
-            const expiresIn = exp - Math.floor(Date.now() / 1000);
+      if (verificationResult.isOpaque) {
+        console.log(chalk.gray(`  Token type: Opaque`));
+      } else if (verificationResult.valid && verificationResult.payload) {
+        console.log(chalk.gray(`  Token type: JWT (Verified)`));
+        console.log(chalk.green(`  ✓ Signature verified`));
+        console.log(chalk.gray(`  Issuer: ${verificationResult.payload.iss || 'N/A'}`));
+        console.log(chalk.gray(`  Subject: ${verificationResult.payload.sub || 'N/A'}`));
+        console.log(chalk.gray(`  Algorithm: ${verificationResult.header?.alg || 'N/A'}`));
+
+        if (verificationResult.payload.exp) {
+          const expiresIn = verificationResult.payload.exp - Math.floor(Date.now() / 1000);
+          if (expiresIn > 0) {
             console.log(chalk.gray(`  Expires in: ${expiresIn}s`));
+          } else {
+            console.log(chalk.yellow(`  ⚠ Token is already expired`));
           }
         }
       } else {
-        console.log(chalk.gray(`  Token type: Opaque`));
+        // Verification failed, but still try to decode for inspection
+        console.log(chalk.yellow(`  Token type: JWT (Unverified)`));
+        console.log(
+          chalk.red(`  ✗ Signature verification failed: ${verificationResult.errors.join(', ')}`),
+        );
+
+        // Fallback to unsafe decode for inspection
+        const decoded = JWTDecoder.decode(
+          (token as Record<string, unknown>).access_token as string,
+        );
+        if (decoded) {
+          console.log(chalk.gray(`  Issuer: ${decoded.payload.iss || 'N/A'}`));
+          console.log(chalk.gray(`  Subject: ${decoded.payload.sub || 'N/A'}`));
+          console.log(chalk.gray(`  Algorithm: ${decoded.header.alg || 'N/A'}`));
+
+          if (JWTDecoder.isExpired(decoded)) {
+            console.log(chalk.yellow(`  ⚠ Token is already expired`));
+          } else {
+            const exp = decoded.payload.exp;
+            if (exp) {
+              const expiresIn = exp - Math.floor(Date.now() / 1000);
+              console.log(chalk.gray(`  Expires in: ${expiresIn}s`));
+            }
+          }
+        }
       }
-    } catch (jwtError) {
+    } catch {
       // Not a JWT, which is fine
       console.log(chalk.gray(`  Token type: Opaque`));
     }
 
-    if (token.refresh_token) {
+    if ((token as Record<string, unknown>).refresh_token) {
       console.log(chalk.gray(`  ✓ Refresh token received`));
     }
 
-    if (token.scope) {
-      console.log(chalk.gray(`  Scopes: ${token.scope}`));
+    if ((token as Record<string, unknown>).scope) {
+      console.log(chalk.gray(`  Scopes: ${(token as Record<string, unknown>).scope}`));
     }
 
     results.push({
       grantType,
       status: 'success',
       message: 'Token obtained successfully',
-      token: verbose ? token.access_token : undefined,
+      token: verbose ? ((token as Record<string, unknown>).access_token as string) : undefined,
       duration: Date.now() - startTime,
     });
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -308,7 +363,7 @@ export async function testDiscoveryCommand(
   options: {
     config?: string;
     verbose?: boolean;
-  }
+  },
 ): Promise<void> {
   try {
     console.log(chalk.blue(`🔍 Testing Provider Discovery: ${provider}`));
@@ -320,8 +375,8 @@ export async function testDiscoveryCommand(
 
     if (options.config) {
       const loader = new ConfigLoader();
-      const config = await loader.loadConfig(options.config);
-      const foundProvider = config.providers.find(p => p.id === provider);
+      const config = await loader.load({ configFile: options.config });
+      const foundProvider = config.providers.find((p) => p.id === provider);
 
       if (!foundProvider) {
         throw new Error(`Provider '${provider}' not found in configuration`);
@@ -363,7 +418,9 @@ export async function testDiscoveryCommand(
             console.log(chalk.gray(`    Content-Type: ${contentType}`));
           }
         } else {
-          console.log(chalk.yellow(`  ⚠ ${endpoint.name}: ${response.status} ${response.statusText}`));
+          console.log(
+            chalk.yellow(`  ⚠ ${endpoint.name}: ${response.status} ${response.statusText}`),
+          );
         }
       } catch (error) {
         console.log(chalk.red(`  ✗ ${endpoint.name}: Failed to connect`));
@@ -372,7 +429,6 @@ export async function testDiscoveryCommand(
         }
       }
     }
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(chalk.red('✗ Discovery test failed:'), errorMessage);

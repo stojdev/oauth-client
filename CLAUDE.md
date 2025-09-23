@@ -2,9 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## The Number ONE rule that cannot, ever, be broken: Frequently run the pnpm quality-gate command to ensure code quality and consistency
+## RULES for Claude Code when working with this repository
+
+### The Number ONE rule that cannot, ever, be broken: Frequently run the pnpm quality-gate command to ensure code quality and consistency
 
 There are NO, NONE, ZERO exceptions to this rule. Code that does not pass the quality gate is dead code and MUST be fixed or DELETED.
+
+### Rule Nuber TWO: Always use any suitable installed Claude Code Agents to assist in code generation, refactoring, and analysis as well as MCP Servers to ALWAYS use current best practices
+
+### Rule Number THREE Always adhere to the established coding standards and project structure as defined in the IMPLEMENTATION_PLAN.md file. Consistency is key to maintainability
+
+There are NO exceptions to this rule. Any deviation from the established standards must be corrected immediately.
+
+### Rule Number FOUR: Prioritize security and best practices in all implementations. Never compromise on security features
+
+Security is paramount. Any code that introduces vulnerabilities or deviates from best practices must be flagged and
+corrected immediately.
+
+### Rule Number FIVE: Ensure all code is well-documented and includes comprehensive comments explaining the purpose and functionality of complex sections
+
+Documentation is essential for maintainability. Any complex logic must be clearly explained in comments.
+
+### Rule Number SIX: Do not use console.log/warn/error for logging. Use the established logging utility in src/utils/logger.ts
 
 ## Project Overview
 

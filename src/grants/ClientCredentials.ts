@@ -20,21 +20,20 @@ export class ClientCredentialsGrant extends OAuthClient {
 
   /**
    * Get access token using client credentials
+   * Uses secure client authentication per RFC 6749
    */
   async getAccessToken(): Promise<TokenResponse> {
     return ErrorHandler.wrap(async () => {
       const params = new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret!,
       });
 
       if (this.config.scope) {
         params.append('scope', this.config.scope.toString());
       }
 
-      const response = await this.httpClient.post(this.config.tokenUrl, params.toString());
-      return response.data as TokenResponse;
+      // Use secure client authentication via base class
+      return this.makeTokenRequest(params);
     });
   }
 }

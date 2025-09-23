@@ -298,9 +298,9 @@ export class ScopeBuilder {
 
     const scopes = new Set<string>();
     for (const presetName of presetNames) {
-      const preset = provider.presets.find(p => p.name === presetName);
+      const preset = provider.presets.find((p) => p.name === presetName);
       if (preset) {
-        preset.scopes.forEach(s => scopes.add(s));
+        preset.scopes.forEach((s) => scopes.add(s));
       }
     }
 
@@ -316,7 +316,7 @@ export class ScopeBuilder {
     for (const scopeString of scopeStrings) {
       if (scopeString) {
         const scopes = scopeString.split(/\s+/).filter(Boolean);
-        scopes.forEach(s => allScopes.add(s));
+        scopes.forEach((s) => allScopes.add(s));
       }
     }
 
@@ -333,7 +333,10 @@ export class ScopeBuilder {
   /**
    * Validate if scopes match provider expectations
    */
-  static validateScopes(providerId: string, scopeString: string): {
+  static validateScopes(
+    providerId: string,
+    scopeString: string,
+  ): {
     valid: boolean;
     warnings: string[];
     suggestions: string[];
@@ -367,15 +370,14 @@ export class ScopeBuilder {
     switch (providerId) {
       case 'google':
         // Check for deprecated scopes
-        if (scopes.some(s => s.includes('googleapis.com/auth/plus'))) {
+        if (scopes.some((s) => s.includes('googleapis.com/auth/plus'))) {
           warnings.push('Google+ scopes are deprecated');
         }
         break;
 
       case 'microsoft':
         // Check for graph API consistency
-        if (scopes.some(s => s.includes('.Read')) &&
-            scopes.some(s => s.includes('.Write'))) {
+        if (scopes.some((s) => s.includes('.Read')) && scopes.some((s) => s.includes('.Write'))) {
           suggestions.push('Consider using .ReadWrite scope instead of separate Read/Write');
         }
         break;
@@ -403,7 +405,10 @@ export class ScopeBuilder {
     description: string;
     scopes: string;
   }> {
-    const commonCombos: Record<string, Array<{ name: string; description: string; scopes: string }>> = {
+    const commonCombos: Record<
+      string,
+      Array<{ name: string; description: string; scopes: string }>
+    > = {
       google: [
         {
           name: 'Basic Authentication',
@@ -418,7 +423,8 @@ export class ScopeBuilder {
         {
           name: 'Google Workspace',
           description: 'Access to Drive, Gmail, and Calendar',
-          scopes: 'openid email https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly',
+          scopes:
+            'openid email https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly',
         },
       ],
       github: [
@@ -452,7 +458,8 @@ export class ScopeBuilder {
         {
           name: 'Full Microsoft 365',
           description: 'Complete Microsoft 365 access',
-          scopes: 'User.Read Mail.ReadWrite Files.ReadWrite Calendars.ReadWrite Teams.ReadBasic.All',
+          scopes:
+            'User.Read Mail.ReadWrite Files.ReadWrite Calendars.ReadWrite Teams.ReadBasic.All',
         },
       ],
     };
@@ -466,9 +473,11 @@ export class ScopeBuilder {
   static getScopeDocumentationUrl(providerId: string): string | undefined {
     const docs: Record<string, string> = {
       google: 'https://developers.google.com/identity/protocols/oauth2/scopes',
-      github: 'https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps',
+      github:
+        'https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps',
       microsoft: 'https://docs.microsoft.com/en-us/graph/permissions-reference',
-      'aws-cognito': 'https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html',
+      'aws-cognito':
+        'https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-define-resource-servers.html',
       okta: 'https://developer.okta.com/docs/reference/api/oidc/#scopes',
       salesforce: 'https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_scopes.htm',
       auth0: 'https://auth0.com/docs/get-started/apis/scopes',
@@ -483,7 +492,7 @@ export class ScopeBuilder {
   static hasRefreshTokenScope(scopeString: string): boolean {
     const scopes = this.parseScopes(scopeString);
     const refreshScopes = ['offline_access', 'refresh_token'];
-    return scopes.some(scope => refreshScopes.includes(scope));
+    return scopes.some((scope) => refreshScopes.includes(scope));
   }
 
   /**
@@ -491,7 +500,7 @@ export class ScopeBuilder {
    */
   static suggestScopesForUseCase(
     providerId: string,
-    useCase: 'authentication' | 'read-only' | 'full-access' | 'admin'
+    useCase: 'authentication' | 'read-only' | 'full-access' | 'admin',
   ): string {
     const provider = this.providerScopes.get(providerId);
     if (!provider) {
@@ -499,33 +508,36 @@ export class ScopeBuilder {
     }
 
     switch (useCase) {
-      case 'authentication':
+      case 'authentication': {
         // Return basic authentication scopes
-        const authPreset = provider.presets.find(p =>
-          p.name.toLowerCase().includes('basic') ||
-          p.name.toLowerCase().includes('profile')
+        const authPreset = provider.presets.find(
+          (p) => p.name.toLowerCase().includes('basic') || p.name.toLowerCase().includes('profile'),
         );
         return authPreset ? authPreset.scopes.join(' ') : 'openid profile email';
+      }
 
-      case 'read-only':
+      case 'read-only': {
         // Return read-only scopes
-        const readPresets = provider.presets.filter(p =>
-          p.scopes.some(s => s.includes('read') || s.includes('readonly'))
+        const readPresets = provider.presets.filter((p) =>
+          p.scopes.some((s) => s.includes('read') || s.includes('readonly')),
         );
-        return readPresets.flatMap(p => p.scopes).join(' ');
+        return readPresets.flatMap((p) => p.scopes).join(' ');
+      }
 
       case 'full-access':
         // Return comprehensive scopes
-        return provider.presets.flatMap(p => p.scopes).join(' ');
+        return provider.presets.flatMap((p) => p.scopes).join(' ');
 
-      case 'admin':
+      case 'admin': {
         // Return admin/management scopes
-        const adminPresets = provider.presets.filter(p =>
-          p.name.toLowerCase().includes('admin') ||
-          p.name.toLowerCase().includes('management') ||
-          p.scopes.some(s => s.includes('admin'))
+        const adminPresets = provider.presets.filter(
+          (p) =>
+            p.name.toLowerCase().includes('admin') ||
+            p.name.toLowerCase().includes('management') ||
+            p.scopes.some((s) => s.includes('admin')),
         );
-        return adminPresets.flatMap(p => p.scopes).join(' ');
+        return adminPresets.flatMap((p) => p.scopes).join(' ');
+      }
 
       default:
         return '';

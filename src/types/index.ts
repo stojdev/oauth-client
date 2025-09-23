@@ -2,6 +2,8 @@
  * OAuth 2.0 Type Definitions
  */
 
+import type { ClientAuthMethod } from '../utils/ClientAuth.js';
+
 export interface OAuthConfig {
   clientId: string;
   clientSecret?: string;
@@ -12,6 +14,8 @@ export interface OAuthConfig {
   state?: string;
   responseType?: 'code' | 'token';
   grantType?: GrantType;
+  authMethod?: ClientAuthMethod;
+  privateKey?: string;
 }
 
 export enum GrantType {
@@ -42,7 +46,7 @@ export interface OAuthError {
 export interface PKCEChallenge {
   codeVerifier: string;
   codeChallenge: string;
-  method: 'S256' | 'plain';
+  method: 'S256'; // Only S256 allowed per RFC 9700
 }
 
 export interface DeviceCodeResponse {
@@ -65,11 +69,8 @@ export interface ProviderConfig {
   discoveryUrl?: string;
   scopes?: Record<string, string>;
   defaultScopes?: string[];
-  authMethod?:
-    | 'client_secret_post'
-    | 'client_secret_basic'
-    | 'client_secret_jwt'
-    | 'private_key_jwt';
+  authMethod?: ClientAuthMethod;
+  supportedAuthMethods?: ClientAuthMethod[];
 }
 
 export interface StoredToken extends TokenResponse {

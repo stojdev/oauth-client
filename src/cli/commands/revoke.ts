@@ -14,7 +14,7 @@ export async function revokeCommand(
     revocationUrl?: string;
     clientId?: string;
     clientSecret?: string;
-  }
+  },
 ): Promise<void> {
   try {
     let token = tokenOrProvider;
@@ -86,9 +86,10 @@ export async function revokeCommand(
       logger.warn('Token may already be revoked or invalid', response.data);
       console.log(chalk.yellow('⚠ Token may already be revoked or invalid'));
     } else {
-      throw new Error(`Revocation failed with status ${response.status}: ${JSON.stringify(response.data)}`);
+      throw new Error(
+        `Revocation failed with status ${response.status}: ${JSON.stringify(response.data)}`,
+      );
     }
-
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
@@ -124,7 +125,7 @@ export async function revokeCommand(
 export async function revokeAllCommand(
   options: {
     force?: boolean;
-  } = {}
+  } = {},
 ): Promise<void> {
   const providers = tokenManager.listProviders();
 
@@ -160,7 +161,7 @@ export async function revokeAllCommand(
       await tokenManager.deleteToken(provider);
       console.log(chalk.green(`✓ Removed token for ${provider}`));
       results.success++;
-    } catch (error) {
+    } catch {
       console.error(chalk.red(`✗ Failed to revoke ${provider}`));
       results.failed++;
     }

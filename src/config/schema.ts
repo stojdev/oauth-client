@@ -4,6 +4,7 @@
  */
 
 import type { GrantType } from '../types/index.js';
+import type { ClientAuthMethod } from '../utils/ClientAuth.js';
 
 /**
  * Provider configuration schema
@@ -61,14 +62,12 @@ export interface ProviderConfig {
   supportedGrantTypes?: GrantType[];
 
   /** Client authentication methods supported */
-  supportedAuthMethods?: Array<
-    'client_secret_post' | 'client_secret_basic' | 'client_secret_jwt' | 'private_key_jwt' | 'none'
-  >;
+  supportedAuthMethods?: ClientAuthMethod[];
 
-  /** PKCE requirement */
+  /** PKCE requirement - only S256 allowed per RFC 9700 */
   pkce?: {
     required: boolean;
-    methods?: Array<'S256' | 'plain'>;
+    methods?: Array<'S256'>; // Only S256 allowed for security
   };
 
   /** Custom parameters for authorization request */
@@ -81,11 +80,7 @@ export interface ProviderConfig {
   customHeaders?: Record<string, string>;
 
   /** Token endpoint auth method */
-  tokenEndpointAuthMethod?:
-    | 'client_secret_post'
-    | 'client_secret_basic'
-    | 'client_secret_jwt'
-    | 'private_key_jwt';
+  tokenEndpointAuthMethod?: ClientAuthMethod;
 
   /** Response type for authorization code flow */
   responseType?: string;
@@ -368,7 +363,7 @@ export const CONFIG_JSON_SCHEMA = {
                 type: 'array',
                 items: {
                   type: 'string',
-                  enum: ['S256', 'plain'],
+                  enum: ['S256'], // Only S256 allowed per RFC 9700
                 },
               },
             },

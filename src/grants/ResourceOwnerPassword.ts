@@ -35,6 +35,7 @@ export class ResourceOwnerPasswordGrant extends OAuthClient {
 
   /**
    * Get access token using username and password
+   * Uses secure client authentication per RFC 6749
    */
   async getAccessToken(): Promise<TokenResponse> {
     return ErrorHandler.wrap(async () => {
@@ -42,13 +43,7 @@ export class ResourceOwnerPasswordGrant extends OAuthClient {
         grant_type: 'password',
         username: this.config.username,
         password: this.config.password,
-        client_id: this.config.clientId,
       });
-
-      // Add client secret if available
-      if (this.config.clientSecret) {
-        params.append('client_secret', this.config.clientSecret);
-      }
 
       // Add scope if specified
       if (this.config.scope) {
@@ -57,8 +52,8 @@ export class ResourceOwnerPasswordGrant extends OAuthClient {
 
       logger.info('Requesting token with Resource Owner Password grant...');
 
-      const response = await this.httpClient.post(this.config.tokenUrl, params.toString());
-      return response.data as TokenResponse;
+      // Use secure client authentication via base class
+      return this.makeTokenRequest(params);
     });
   }
 }

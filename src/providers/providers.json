@@ -154,7 +154,7 @@
       "supportedAuthMethods": ["client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt"],
       "pkce": {
         "required": false,
-        "methods": ["S256", "plain"]
+        "methods": ["S256"]
       },
       "scope": "openid profile email",
       "responseType": "code",

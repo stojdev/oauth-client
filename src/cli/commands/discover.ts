@@ -5,6 +5,7 @@ import { DiscoveryClient } from '../../providers/DiscoveryClient.js';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import inquirer from 'inquirer';
+import type { OIDCDiscoveryDocument } from '../../providers/DiscoveryClient.js';
 
 /**
  * Discover OAuth provider configuration
@@ -16,7 +17,7 @@ export async function discoverCommand(
     clientSecret?: string;
     save?: string;
     interactive?: boolean;
-  }
+  },
 ): Promise<void> {
   try {
     console.log(chalk.blue(`🔍 Discovering OAuth configuration for: ${issuerUrl}`));
@@ -53,21 +54,24 @@ export async function discoverCommand(
     // Grant types
     if (document.grant_types_supported) {
       console.log(chalk.gray('  Grant Types:'));
-      document.grant_types_supported.forEach(grant => {
+      document.grant_types_supported.forEach((grant) => {
         console.log(chalk.gray(`    • ${grant}`));
       });
     }
 
     // PKCE support
     if (document.code_challenge_methods_supported) {
-      console.log(chalk.gray('  PKCE Methods:'), document.code_challenge_methods_supported.join(', '));
+      console.log(
+        chalk.gray('  PKCE Methods:'),
+        document.code_challenge_methods_supported.join(', '),
+      );
     }
 
     // Scopes
     if (document.scopes_supported) {
       console.log(chalk.gray('  Scopes:'));
       const displayScopes = document.scopes_supported.slice(0, 10);
-      displayScopes.forEach(scope => {
+      displayScopes.forEach((scope) => {
         console.log(chalk.gray(`    • ${scope}`));
       });
       if (document.scopes_supported.length > 10) {
@@ -77,7 +81,10 @@ export async function discoverCommand(
 
     // Auth methods
     if (document.token_endpoint_auth_methods_supported) {
-      console.log(chalk.gray('  Auth Methods:'), document.token_endpoint_auth_methods_supported.join(', '));
+      console.log(
+        chalk.gray('  Auth Methods:'),
+        document.token_endpoint_auth_methods_supported.join(', '),
+      );
     }
 
     // Interactive mode - ask if user wants to create config
@@ -93,11 +100,11 @@ export async function discoverCommand(
       ]);
 
       if (createConfig) {
-        await createConfigFromDiscovery(document, issuerUrl, options);
+        await createConfigFromDiscovery(document, options);
       }
     } else if (options.save) {
       // Auto-create config if save option provided
-      await createConfigFromDiscovery(document, issuerUrl, options);
+      await createConfigFromDiscovery(document, options);
     }
 
     // Get provider features
@@ -106,13 +113,27 @@ export async function discoverCommand(
     const features = await DiscoveryClient.getProviderFeatures(issuerUrl);
 
     console.log(chalk.blue('Provider Features:'));
-    console.log(chalk.gray('  OpenID Connect:'), features.supportsOIDC ? chalk.green('✓') : chalk.red('✗'));
+    console.log(
+      chalk.gray('  OpenID Connect:'),
+      features.supportsOIDC ? chalk.green('✓') : chalk.red('✗'),
+    );
     console.log(chalk.gray('  PKCE:'), features.supportsPKCE ? chalk.green('✓') : chalk.red('✗'));
-    console.log(chalk.gray('  Device Flow:'), features.supportsDeviceFlow ? chalk.green('✓') : chalk.red('✗'));
-    console.log(chalk.gray('  Token Introspection:'), features.supportsIntrospection ? chalk.green('✓') : chalk.red('✗'));
-    console.log(chalk.gray('  Token Revocation:'), features.supportsRevocation ? chalk.green('✓') : chalk.red('✗'));
-    console.log(chalk.gray('  Refresh Tokens:'), features.supportsRefreshTokens ? chalk.green('✓') : chalk.red('✗'));
-
+    console.log(
+      chalk.gray('  Device Flow:'),
+      features.supportsDeviceFlow ? chalk.green('✓') : chalk.red('✗'),
+    );
+    console.log(
+      chalk.gray('  Token Introspection:'),
+      features.supportsIntrospection ? chalk.green('✓') : chalk.red('✗'),
+    );
+    console.log(
+      chalk.gray('  Token Revocation:'),
+      features.supportsRevocation ? chalk.green('✓') : chalk.red('✗'),
+    );
+    console.log(
+      chalk.gray('  Refresh Tokens:'),
+      features.supportsRefreshTokens ? chalk.green('✓') : chalk.red('✗'),
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(chalk.red('✗ Discovery failed:'), errorMessage);
@@ -133,13 +154,12 @@ export async function discoverCommand(
  * Create configuration file from discovery
  */
 async function createConfigFromDiscovery(
-  document: any,
-  issuerUrl: string,
+  document: unknown,
   options: {
     clientId?: string;
     clientSecret?: string;
     save?: string;
-  }
+  },
 ): Promise<void> {
   let clientId = options.clientId;
   let clientSecret = options.clientSecret;
@@ -165,12 +185,12 @@ async function createConfigFromDiscovery(
 
   // Create configuration
   const config = DiscoveryClient.createConfigFromDiscovery(
-    document,
+    document as unknown as OIDCDiscoveryDocument,
     clientId!,
     clientSecret,
     {
       redirectUri: 'http://localhost:8080/callback',
-    }
+    },
   );
 
   // Determine filename
@@ -218,7 +238,7 @@ export async function testDiscoveryCommand(): Promise<void> {
       } else {
         console.log(chalk.yellow('⚠ No discovery endpoint found'));
       }
-    } catch (error) {
+    } catch {
       console.log(chalk.red('✗ Failed to check'));
     }
   }

@@ -1,4 +1,9 @@
 import { logger } from './Logger.js';
+import {
+  JWTVerifier,
+  type JWTVerificationOptions,
+  type JWTVerificationResult,
+} from './JWTVerifier.js';
 
 /**
  * JWT Token structure
@@ -38,13 +43,36 @@ export interface DecodedJWT {
 }
 
 /**
- * JWT Decoder for token inspection
- * Note: This decoder does NOT verify signatures - it's for inspection only
+ * JWT Decoder for token inspection and verification
+ * Provides both secure verification and unsafe decoding for inspection
  */
 export class JWTDecoder {
   /**
+   * Verify and decode a JWT token with signature validation
+   * This is the SECURE method that should be used for token validation
+   */
+  static async verifyAndDecode(
+    token: string,
+    options: JWTVerificationOptions = {},
+  ): Promise<DecodedJWT | null> {
+    return JWTVerifier.verifyAndDecode(token, options);
+  }
+
+  /**
+   * Verify a JWT token and return detailed verification result
+   */
+  static async verify(
+    token: string,
+    options: JWTVerificationOptions = {},
+  ): Promise<JWTVerificationResult> {
+    return JWTVerifier.verify(token, options);
+  }
+
+  /**
    * Decode a JWT token without verification
    * WARNING: This method does NOT verify the token signature
+   * Use only for inspection/debugging purposes, never for security decisions
+   * @deprecated Use verifyAndDecode() for secure token validation
    */
   static decode(token: string): DecodedJWT | null {
     try {

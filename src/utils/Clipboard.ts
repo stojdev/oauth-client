@@ -12,7 +12,7 @@ export class ClipboardManager {
     try {
       await clipboardy.write(text);
       return true;
-    } catch (error) {
+    } catch {
       // Clipboard might not be available in some environments (SSH, Docker, etc.)
       return false;
     }
@@ -37,7 +37,7 @@ export class ClipboardManager {
   static async read(): Promise<string | null> {
     try {
       return await clipboardy.read();
-    } catch (error) {
+    } catch {
       return null;
     }
   }

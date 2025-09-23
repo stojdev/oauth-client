@@ -163,25 +163,21 @@ export class AuthorizationCodeGrant extends OAuthClient {
 
   /**
    * Exchange authorization code for tokens
+   * Uses secure client authentication per RFC 6749
    */
   private async exchangeAuthorizationCode(code: string): Promise<TokenResponse> {
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
       redirect_uri: this.config.redirectUri,
-      client_id: this.config.clientId,
     });
-
-    // Add client secret if available
-    if (this.config.clientSecret) {
-      params.append('client_secret', this.config.clientSecret);
-    }
 
     // Add PKCE verifier if used
     if (this.pkce) {
       params.append('code_verifier', this.pkce.codeVerifier);
     }
 
+    // Client credentials handled securely by exchangeToken method
     return this.exchangeToken(params);
   }
 

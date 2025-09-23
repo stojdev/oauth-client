@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { logger } from '../utils/Logger.js';
+import { ClientAuthMethod } from '../utils/ClientAuth.js';
+import { GrantType } from '../types/index.js';
 import type { ProviderConfig } from '../config/schema.js';
 
 /**
@@ -71,7 +73,7 @@ export class DiscoveryClient {
       const response = await axios.get<OIDCDiscoveryDocument>(discoveryUrl, {
         timeout: 10000,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
@@ -102,8 +104,10 @@ export class DiscoveryClient {
     const baseUrl = issuerUrl.replace(/\/$/, '');
 
     // Check if it's already a discovery URL
-    if (baseUrl.endsWith('/.well-known/openid-configuration') ||
-        baseUrl.endsWith('/.well-known/oauth-authorization-server')) {
+    if (
+      baseUrl.endsWith('/.well-known/openid-configuration') ||
+      baseUrl.endsWith('/.well-known/oauth-authorization-server')
+    ) {
       return baseUrl;
     }
 
@@ -130,7 +134,7 @@ export class DiscoveryClient {
       const response = await axios.get<OAuth2Metadata>(discoveryUrl, {
         timeout: 10000,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
@@ -141,7 +145,7 @@ export class DiscoveryClient {
       this.cacheTimestamps.set(discoveryUrl, Date.now());
 
       return document;
-    } catch (error) {
+    } catch {
       // Fall back to OIDC discovery
       return this.discover(issuerUrl) as Promise<OAuth2Metadata>;
     }
@@ -154,7 +158,7 @@ export class DiscoveryClient {
     const cached = this.discoveryCache.get(url);
     const timestamp = this.cacheTimestamps.get(url);
 
-    if (cached && timestamp && (Date.now() - timestamp < this.CACHE_TTL)) {
+    if (cached && timestamp && Date.now() - timestamp < this.CACHE_TTL) {
       return cached;
     }
 
@@ -168,7 +172,7 @@ export class DiscoveryClient {
     document: OIDCDiscoveryDocument,
     clientId: string,
     clientSecret?: string,
-    additionalConfig?: Partial<ProviderConfig>
+    additionalConfig?: Partial<ProviderConfig>,
   ): ProviderConfig {
     // Map discovery fields to provider config
     const config: ProviderConfig = {
@@ -200,15 +204,23 @@ export class DiscoveryClient {
 
     // Determine supported grant types
     if (document.grant_types_supported) {
-      config.supportedGrantTypes = document.grant_types_supported;
+      config.supportedGrantTypes = document.grant_types_supported.filter(
+        (type): type is GrantType => Object.values(GrantType).includes(type as GrantType),
+      );
     }
 
-    // Determine PKCE support
+    // Determine PKCE support - only S256 allowed per RFC 9700
     if (document.code_challenge_methods_supported) {
-      config.pkce = {
-        required: true,
-        methods: document.code_challenge_methods_supported,
-      };
+      const supportedMethods = document.code_challenge_methods_supported.filter(
+        (method): method is 'S256' => method === 'S256', // Only S256 allowed for security
+      );
+
+      if (supportedMethods.length > 0) {
+        config.pkce = {
+          required: true,
+          methods: supportedMethods,
+        };
+      }
     }
 
     // Set default scopes for OIDC
@@ -223,7 +235,10 @@ export class DiscoveryClient {
 
     // Token endpoint auth methods
     if (document.token_endpoint_auth_methods_supported) {
-      config.supportedAuthMethods = document.token_endpoint_auth_methods_supported;
+      config.supportedAuthMethods = document.token_endpoint_auth_methods_supported.filter(
+        (method): method is ClientAuthMethod =>
+          Object.values(ClientAuthMethod).includes(method as ClientAuthMethod),
+      );
     }
 
     return config;
@@ -236,7 +251,7 @@ export class DiscoveryClient {
     issuerUrl: string,
     clientId: string,
     clientSecret?: string,
-    additionalConfig?: Partial<ProviderConfig>
+    additionalConfig?: Partial<ProviderConfig>,
   ): Promise<ProviderConfig> {
     try {
       // Try OIDC discovery first

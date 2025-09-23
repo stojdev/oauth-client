@@ -67,12 +67,7 @@ export class DeviceAuthorizationGrant extends OAuthClient {
     const params = new URLSearchParams({
       grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
       device_code: this.deviceCode,
-      client_id: this.config.clientId,
     });
-
-    if (this.config.clientSecret) {
-      params.append('client_secret', this.config.clientSecret);
-    }
 
     // Keep polling until we get a token or error
     let attempts = 0;
@@ -80,8 +75,8 @@ export class DeviceAuthorizationGrant extends OAuthClient {
 
     while (attempts < maxAttempts) {
       try {
-        const response = await this.httpClient.post(this.config.tokenUrl, params.toString());
-        return response.data as TokenResponse;
+        // Use secure client authentication via base class
+        return await this.makeTokenRequest(params);
       } catch (error) {
         if (error && typeof error === 'object' && 'response' in error) {
           const errorResponse = (error as { response?: { data?: { error?: string } } }).response;

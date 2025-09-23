@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { logger } from '../utils/Logger.js';
 import { validateOAuthConfig, validateTokenResponse } from '../utils/Validators.js';
+import { ClientAuth, ClientAuthMethod } from '../utils/ClientAuth.js';
 import { GrantType } from '../types/index.js';
 import type { OAuthConfig, TokenResponse, OAuthError } from '../types/index.js';
 
@@ -67,25 +68,29 @@ export abstract class OAuthClient {
   abstract getAccessToken(): Promise<TokenResponse>;
 
   /**
-   * Exchange authorization code for tokens
+   * Exchange tokens using secure client authentication per RFC 6749
    */
   protected async exchangeToken(params: URLSearchParams): Promise<TokenResponse> {
     try {
-      const config: AxiosRequestConfig = {
+      let config: AxiosRequestConfig = {
         method: 'POST',
         url: this.config.tokenUrl,
         data: params.toString(),
       };
 
-      // Add client authentication
-      if (this.config.clientSecret) {
-        config.auth = {
-          username: this.config.clientId,
-          password: this.config.clientSecret,
-        };
-      } else {
-        params.append('client_id', this.config.clientId);
-      }
+      // Apply secure client authentication
+      const authConfig = {
+        clientId: this.config.clientId,
+        clientSecret: this.config.clientSecret,
+        authMethod: this.config.authMethod,
+        privateKey: this.config.privateKey,
+        tokenUrl: this.config.tokenUrl,
+      };
+
+      config = ClientAuth.applyClientAuth(config, params, authConfig);
+
+      // Update data with potentially modified params
+      config.data = params.toString();
 
       const response = await this.httpClient.request(config);
       return validateTokenResponse(response.data);
@@ -161,5 +166,19 @@ export abstract class OAuthClient {
    */
   get grantType(): GrantType | undefined {
     return this.config.grantType;
+  }
+
+  /**
+   * Get the configured authentication method
+   */
+  get authMethod(): ClientAuthMethod {
+    return this.config.authMethod || ClientAuthMethod.ClientSecretBasic;
+  }
+
+  /**
+   * Make a secure token request with proper client authentication
+   */
+  protected async makeTokenRequest(params: URLSearchParams): Promise<TokenResponse> {
+    return this.exchangeToken(params);
   }
 }

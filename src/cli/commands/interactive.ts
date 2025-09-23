@@ -12,7 +12,6 @@ import { inspectCommand } from './inspect.js';
 import { configInitCommand, configAddCommand, configListCommand } from './config.js';
 import tokenManager from '../../core/TokenManager.js';
 import { ProviderConfigManager } from '../../providers/ProviderConfig.js';
-import type { OAuthTokenResponse } from '../../types/OAuth.js';
 
 interface CommandHistoryEntry {
   timestamp: string;
@@ -43,7 +42,7 @@ export class InteractiveCLI {
         const data = readFileSync(this.historyFile, 'utf-8');
         this.history = JSON.parse(data);
       }
-    } catch (error) {
+    } catch {
       // Ignore history load errors
     }
   }
@@ -58,7 +57,7 @@ export class InteractiveCLI {
         mkdirSync(dir, { recursive: true });
       }
       writeFileSync(this.historyFile, JSON.stringify(this.history, null, 2));
-    } catch (error) {
+    } catch {
       // Ignore history save errors
     }
   }
@@ -221,8 +220,7 @@ export class InteractiveCLI {
         },
       ]);
 
-      authAnswers.grant = grantTypes;
-      await this.executeAuthentication(provider, authAnswers);
+      await this.executeAuthentication(provider, { ...authAnswers, grant: grantTypes });
     }
   }
 
@@ -239,16 +237,16 @@ export class InteractiveCLI {
     ];
 
     const grantTypeMap: Record<string, string> = {
-      'authorization_code': '🌐 Authorization Code (Web Apps)',
-      'client_credentials': '🤖 Client Credentials (M2M)',
-      'password': '🔑 Password (Username/Password)',
+      authorization_code: '🌐 Authorization Code (Web Apps)',
+      client_credentials: '🤖 Client Credentials (M2M)',
+      password: '🔑 Password (Username/Password)',
       'urn:ietf:params:oauth:grant-type:device_code': '📱 Device Code (Limited Input)',
-      'implicit': '⚠️  Implicit (Deprecated)',
+      implicit: '⚠️  Implicit (Deprecated)',
     };
 
     const choices = grantTypes
-      .filter(gt => grantTypeMap[gt])
-      .map(gt => ({
+      .filter((gt) => grantTypeMap[gt])
+      .map((gt) => ({
         name: grantTypeMap[gt],
         value: gt,
       }));
@@ -264,7 +262,7 @@ export class InteractiveCLI {
 
     // Additional prompts for specific grant types
     if (grantType === 'password') {
-      const credentials = await inquirer.prompt([
+      await inquirer.prompt([
         {
           type: 'input',
           name: 'username',
@@ -287,7 +285,10 @@ export class InteractiveCLI {
   /**
    * Execute authentication command
    */
-  private async executeAuthentication(provider: string, options: Record<string, unknown>): Promise<void> {
+  private async executeAuthentication(
+    provider: string,
+    options: Record<string, unknown>,
+  ): Promise<void> {
     try {
       this.addToHistory(`auth ${provider}`, 'success');
       await authCommand(provider, options);
@@ -424,7 +425,7 @@ export class InteractiveCLI {
       ...baseAnswers,
       ...grantAnswers,
       scope,
-      output: 'text',
+      output: 'text' as const,
     };
 
     try {
@@ -538,9 +539,13 @@ export class InteractiveCLI {
           name: 'jwtToken',
           message: 'Enter JWT token:',
           validate: (input: string) => {
-            if (!input) return 'Token is required';
+            if (!input) {
+              return 'Token is required';
+            }
             const parts = input.split('.');
-            if (parts.length !== 3) return 'Invalid JWT format (should be xxx.yyy.zzz)';
+            if (parts.length !== 3) {
+              return 'Invalid JWT format (should be xxx.yyy.zzz)';
+            }
             return true;
           },
         },
@@ -629,7 +634,7 @@ export class InteractiveCLI {
         }
         break;
 
-      case 'add':
+      case 'add': {
         const providerIds = this.providerManager.listProviderIds();
         const { provider } = await inquirer.prompt([
           {
@@ -649,6 +654,7 @@ export class InteractiveCLI {
           console.error(chalk.red('Add failed:'), errorMsg);
         }
         break;
+      }
 
       case 'list':
         try {
@@ -697,8 +703,8 @@ export class InteractiveCLI {
             if (token) {
               const preview = token.access_token.substring(0, 30) + '...';
               console.log(chalk.gray(`• ${provider}: ${preview}`));
-              if (token.expires_at) {
-                const expiresIn = Math.floor((token.expires_at - Date.now()) / 1000);
+              if (token.expiresAt) {
+                const expiresIn = Math.floor((token.expiresAt - Date.now()) / 1000);
                 if (expiresIn > 0) {
                   console.log(chalk.gray(`  Expires in: ${this.formatDuration(expiresIn)}`));
                 } else {
@@ -711,7 +717,7 @@ export class InteractiveCLI {
         this.addToHistory('tokens:list', `${providers.length} tokens`);
         break;
 
-      case 'remove':
+      case 'remove': {
         if (providers.length === 0) {
           console.log(chalk.yellow('No tokens to remove'));
           break;
@@ -736,8 +742,9 @@ export class InteractiveCLI {
           this.addToHistory(`tokens:remove ${provider}`, `error: ${errorMsg}`);
         }
         break;
+      }
 
-      case 'clear':
+      case 'clear': {
         const { confirm } = await inquirer.prompt([
           {
             type: 'confirm',
@@ -755,6 +762,7 @@ export class InteractiveCLI {
           console.log(chalk.gray('Cancelled'));
         }
         break;
+      }
     }
   }
 
@@ -808,37 +816,18 @@ export class InteractiveCLI {
   }
 
   /**
-   * Offer to copy token to clipboard
-   */
-  private async offerTokenCopy(token?: string): Promise<void> {
-    if (!token) return;
-
-    try {
-      const { copy } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'copy',
-          message: 'Copy access token to clipboard?',
-          default: false,
-        },
-      ]);
-
-      if (copy) {
-        const { ClipboardManager } = await import('../../utils/Clipboard.js');
-        await ClipboardManager.copyToken(token, 'Access token');
-      }
-    } catch {
-      // Ignore clipboard errors
-    }
-  }
-
-  /**
    * Format duration in seconds to human-readable
    */
   private formatDuration(seconds: number): string {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    if (seconds < 3600) {
+      return `${Math.floor(seconds / 60)}m`;
+    }
+    if (seconds < 86400) {
+      return `${Math.floor(seconds / 3600)}h`;
+    }
     return `${Math.floor(seconds / 86400)}d`;
   }
 

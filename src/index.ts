@@ -21,8 +21,19 @@ export { logger } from './utils/Logger.js';
 export * from './utils/PKCEGenerator.js';
 export { StateManager } from './utils/StateManager.js';
 export { CallbackServer } from './utils/CallbackServer.js';
+export { ClientAuth, ClientAuthMethod } from './utils/ClientAuth.js';
+export type { ClientAuthConfig } from './utils/ClientAuth.js';
 export { JWTDecoder } from './utils/JWTDecoder.js';
 export type { DecodedJWT, JWTHeader, JWTPayload } from './utils/JWTDecoder.js';
+export { JWTVerifier } from './utils/JWTVerifier.js';
+export type {
+  JWTVerificationOptions,
+  JWTVerificationResult,
+  JWKSKey,
+  JWKSResponse,
+} from './utils/JWTVerifier.js';
+export { JWTSecurity, validateJWTToken } from './utils/JWTSecurity.js';
+export type { JWTSecurityConfig, TokenValidationResult } from './utils/JWTSecurity.js';
 export * from './utils/Validators.js';
 
 // Configuration

@@ -97,7 +97,7 @@ export async function configAddCommand(
       const preset = providerManager.getPreset(provider);
       const isPreset = !!preset;
 
-      const questions: Record<string, unknown>[] = [
+      const questions: unknown[] = [
         {
           type: 'input',
           name: 'clientId',
@@ -132,7 +132,9 @@ export async function configAddCommand(
         );
       }
 
-      const answers = (await inquirer.prompt(questions)) as Record<string, string>;
+      const answers = (await inquirer.prompt(
+        questions as unknown as Parameters<typeof inquirer.prompt>[0],
+      )) as Record<string, string>;
 
       if (isPreset) {
         config = providerManager.createFromPreset(provider, {

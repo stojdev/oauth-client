@@ -29,10 +29,14 @@ export function generateCodeVerifier(length = 128): string {
 
 /**
  * Generate a PKCE code challenge from a verifier
+ * Per RFC 9700, only S256 method is allowed for security
  */
-export function generateCodeChallenge(verifier: string, method: 'S256' | 'plain' = 'S256'): string {
-  if (method === 'plain') {
-    return verifier;
+export function generateCodeChallenge(verifier: string, method: 'S256' = 'S256'): string {
+  if (method !== 'S256') {
+    throw new Error(
+      'Only S256 code challenge method is allowed per RFC 9700. ' +
+        'The "plain" method is insecure and has been deprecated for security reasons.',
+    );
   }
 
   // S256 method: base64url(sha256(verifier))
@@ -42,8 +46,16 @@ export function generateCodeChallenge(verifier: string, method: 'S256' | 'plain'
 
 /**
  * Generate a complete PKCE challenge pair
+ * Per RFC 9700, only S256 method is supported for security
  */
-export function generatePKCEChallenge(method: 'S256' | 'plain' = 'S256'): PKCEChallenge {
+export function generatePKCEChallenge(method: 'S256' = 'S256'): PKCEChallenge {
+  if (method !== 'S256') {
+    throw new Error(
+      'Only S256 code challenge method is allowed per RFC 9700. ' +
+        'The "plain" method is insecure and has been deprecated for security reasons.',
+    );
+  }
+
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier, method);
 

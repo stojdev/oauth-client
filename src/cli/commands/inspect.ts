@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { JWTDecoder } from '../../utils/JWTDecoder.js';
+import { JWTVerifier } from '../../utils/JWTVerifier.js';
 import tokenManager from '../../core/TokenManager.js';
 
 /**
@@ -29,6 +30,50 @@ export async function inspectCommand(
     if (!tokenToInspect) {
       throw new Error('No token provided. Use --provider or provide token as argument');
     }
+
+    // Security warning for inspection mode
+    console.log(
+      chalk.yellow('⚠️  SECURITY WARNING: This inspection does NOT verify token signatures'),
+    );
+    console.log(
+      chalk.yellow(
+        '   For secure token validation, use the verification features in test commands',
+      ),
+    );
+    console.log();
+
+    // Check if token looks like a JWT
+    const isJWTFormat = tokenToInspect.split('.').length === 3;
+
+    if (!isJWTFormat) {
+      console.log(chalk.gray('Token appears to be opaque (not JWT format)'));
+      console.log(chalk.gray(`Token: ${tokenToInspect.substring(0, 50)}...`));
+      return;
+    }
+
+    // Try to get some verification info (without requiring keys)
+    try {
+      const verifyResult = await JWTVerifier.verify(tokenToInspect, {
+        algorithms: ['RS256', 'RS384', 'RS512', 'HS256', 'HS384', 'HS512'],
+        ignoreExpiration: true, // Just for structure check
+      });
+
+      if (verifyResult.isOpaque) {
+        console.log(chalk.gray('Token is opaque (not JWT)'));
+        return;
+      } else if (verifyResult.valid) {
+        console.log(chalk.green('✓ Token signature verified (if key was available)'));
+      } else {
+        console.log(chalk.yellow('⚠ Token signature could not be verified:'));
+        verifyResult.errors.forEach((error) => {
+          console.log(chalk.yellow(`  - ${error}`));
+        });
+      }
+    } catch {
+      console.log(chalk.yellow('⚠ Could not attempt signature verification'));
+    }
+
+    console.log();
 
     // Decode and display token
     const formatted = JWTDecoder.format(tokenToInspect, options?.raw);

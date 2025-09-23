@@ -1,4 +1,6 @@
 import type { ProviderConfig, ProviderPreset } from '../config/schema.js';
+import type { OAuthConfig } from '../types/index.js';
+import { ClientAuth, ClientAuthMethod } from '../utils/ClientAuth.js';
 import { logger } from '../utils/Logger.js';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -26,7 +28,7 @@ export class ProviderConfigManager {
         resolve(process.cwd(), 'dist/providers.json'),
       ];
 
-      let data: any;
+      let data: Record<string, unknown> | undefined;
       for (const path of possiblePaths) {
         try {
           const content = readFileSync(path, 'utf-8');
@@ -59,7 +61,9 @@ export class ProviderConfigManager {
         };
       }
 
-      for (const [key, preset] of Object.entries(data.providers)) {
+      for (const [key, preset] of Object.entries(
+        (data.providers as Record<string, unknown>) || {},
+      )) {
         this.presets.set(key, preset as ProviderPreset);
       }
 
@@ -314,5 +318,132 @@ export class ProviderConfigManager {
     });
 
     return recommended;
+  }
+
+  /**
+   * Convert provider configuration to OAuth configuration with secure authentication
+   */
+  createOAuthConfig(providerConfig: ProviderConfig): OAuthConfig {
+    // Determine the best authentication method
+    const authMethod = this.selectAuthMethod(providerConfig);
+
+    const oauthConfig: OAuthConfig = {
+      clientId: providerConfig.clientId,
+      clientSecret: providerConfig.clientSecret,
+      authorizationUrl: providerConfig.authorizationUrl || '',
+      tokenUrl: providerConfig.tokenUrl,
+      redirectUri: Array.isArray(providerConfig.redirectUri)
+        ? providerConfig.redirectUri[0]
+        : providerConfig.redirectUri,
+      scope: Array.isArray(providerConfig.scope)
+        ? providerConfig.scope.join(' ')
+        : providerConfig.scope,
+      authMethod,
+    };
+
+    // Validate the authentication configuration
+    const authConfig = {
+      clientId: oauthConfig.clientId,
+      clientSecret: oauthConfig.clientSecret,
+      authMethod,
+      tokenUrl: providerConfig.tokenUrl,
+    };
+
+    const validation = ClientAuth.validateAuthConfig(authConfig);
+    if (!validation.valid) {
+      logger.warn(
+        `Authentication configuration issues for provider ${providerConfig.id}: ${validation.errors.join(', ')}`,
+      );
+    }
+
+    return oauthConfig;
+  }
+
+  /**
+   * Select the best authentication method for a provider
+   * Based on provider capabilities and security best practices
+   */
+  private selectAuthMethod(providerConfig: ProviderConfig): ClientAuthMethod {
+    // Use explicitly configured method if available
+    if (providerConfig.tokenEndpointAuthMethod) {
+      return providerConfig.tokenEndpointAuthMethod;
+    }
+
+    // Use provider-recommended method based on supported methods
+    const supportedMethods = providerConfig.supportedAuthMethods;
+    const hasClientSecret = !!providerConfig.clientSecret;
+
+    const recommendedMethod = ClientAuth.getRecommendedAuthMethod(
+      supportedMethods,
+      hasClientSecret,
+    );
+
+    // Log the selected method for transparency
+    if (recommendedMethod !== ClientAuthMethod.ClientSecretBasic) {
+      logger.info(
+        `Selected authentication method for provider ${providerConfig.id}: ${recommendedMethod}`,
+      );
+
+      if (recommendedMethod === ClientAuthMethod.ClientSecretPost) {
+        logger.warn(
+          `Provider ${providerConfig.id} is using client_secret_post authentication. ` +
+            'This is less secure than client_secret_basic and may expose credentials in logs.',
+        );
+      }
+    }
+
+    return recommendedMethod;
+  }
+
+  /**
+   * Get authentication method recommendations for a provider
+   */
+  getAuthMethodRecommendations(providerId: string): {
+    current?: ClientAuthMethod;
+    recommended: ClientAuthMethod;
+    alternatives: ClientAuthMethod[];
+    warnings: string[];
+  } {
+    const preset = this.getPreset(providerId);
+    if (!preset) {
+      return {
+        recommended: ClientAuthMethod.ClientSecretBasic,
+        alternatives: [],
+        warnings: ['Provider not found'],
+      };
+    }
+
+    const providerConfig = preset as unknown as ProviderConfig;
+    const hasClientSecret = !!providerConfig.clientSecret;
+    const supportedMethods = providerConfig.supportedAuthMethods || [];
+
+    const current = providerConfig.tokenEndpointAuthMethod;
+    const recommended = ClientAuth.getRecommendedAuthMethod(supportedMethods, hasClientSecret);
+
+    // Get alternative methods in order of preference
+    const alternatives = supportedMethods.filter((method) => method !== recommended);
+
+    // Generate warnings
+    const warnings: string[] = [];
+    if (current === ClientAuthMethod.ClientSecretPost) {
+      warnings.push(
+        'Using client_secret_post is less secure than client_secret_basic and may expose credentials in logs.',
+      );
+    }
+    if (!hasClientSecret && supportedMethods.includes(ClientAuthMethod.ClientSecretBasic)) {
+      warnings.push('Provider supports client_secret_basic but no client secret is configured.');
+    }
+    if (current && current !== recommended) {
+      warnings.push(
+        `Current method (${current}) is not the most secure option. Consider using ${recommended}.`,
+      );
+    }
+
+    return {
+      current,
+      recommended,
+      alternatives,
+      warnings,
+    };
   }
 }

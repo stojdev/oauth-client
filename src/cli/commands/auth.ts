@@ -107,7 +107,8 @@ export async function authCommand(
       case 'device_code': {
         const client = new DeviceAuthorizationGrant({
           ...config,
-          deviceAuthorizationUrl: (config as Record<string, unknown>).deviceAuthorizationUrl as string || '',
+          deviceAuthorizationUrl:
+            ((config as unknown as Record<string, unknown>).deviceAuthorizationUrl as string) || '',
         });
         token = await client.getAccessToken();
         break;
