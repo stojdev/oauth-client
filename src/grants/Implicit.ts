@@ -1,7 +1,7 @@
 import { OAuthClient } from '../core/OAuthClient.js';
 import { ErrorHandler, OAuthClientError } from '../core/ErrorHandler.js';
 import { CallbackServer } from '../utils/CallbackServer.js';
-import { generateState } from '../utils/PKCEGenerator.js';
+// State generation now handled by StateManager for enhanced security
 import stateManager from '../utils/StateManager.js';
 import { logger } from '../utils/Logger.js';
 import type { OAuthConfig, TokenResponse } from '../types/index.js';
@@ -90,10 +90,9 @@ export class ImplicitGrant extends OAuthClient {
    */
   private buildAuthorizationUrl(): string {
     const url = new URL(this.config.authorizationUrl);
-    const state = generateState();
 
-    // Store state for verification
-    stateManager.create({ grantType: 'implicit' });
+    // Generate and store state for CSRF protection (MANDATORY per RFC 9700)
+    const state = stateManager.create({ grantType: 'implicit' });
 
     // Implicit flow uses response_type=token
     url.searchParams.set('client_id', this.config.clientId);
@@ -155,9 +154,23 @@ export class ImplicitGrant extends OAuthClient {
       throw new OAuthClientError('No access token in response');
     }
 
-    // Verify state if present
-    if (state && !stateManager.exists(state)) {
-      throw new OAuthClientError('Invalid state parameter - possible CSRF attack');
+    // MANDATORY state verification for CSRF protection (RFC 9700 compliance)
+    if (!state) {
+      throw new OAuthClientError(
+        'Missing state parameter in authorization callback. ' +
+          'This is a security violation - state parameter is mandatory for CSRF protection, ' +
+          'especially critical in the deprecated Implicit flow.',
+      );
+    }
+
+    // Verify state matches and is valid
+    const stateData = stateManager.verify(state);
+    if (!stateData) {
+      throw new OAuthClientError(
+        'Invalid or expired state parameter - possible CSRF attack. ' +
+          'State must be present, valid, and match the original request. ' +
+          'This is critical in Implicit flow due to token exposure in URL fragments.',
+      );
     }
 
     logger.warn('Token received via URL fragment (INSECURE)');

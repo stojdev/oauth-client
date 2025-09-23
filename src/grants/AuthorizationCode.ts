@@ -1,7 +1,7 @@
 import { OAuthClient } from '../core/OAuthClient.js';
 import { ErrorHandler, OAuthClientError } from '../core/ErrorHandler.js';
 import { CallbackServer } from '../utils/CallbackServer.js';
-import { generatePKCEChallenge, generateState } from '../utils/PKCEGenerator.js';
+import { generatePKCEChallenge } from '../utils/PKCEGenerator.js';
 import stateManager from '../utils/StateManager.js';
 import { logger } from '../utils/Logger.js';
 import type { OAuthConfig, TokenResponse, PKCEChallenge } from '../types/index.js';
@@ -45,10 +45,9 @@ export class AuthorizationCodeGrant extends OAuthClient {
    */
   private buildAuthorizationUrl(): string {
     const url = new URL(this.config.authorizationUrl);
-    const state = generateState();
 
-    // Store state for verification
-    stateManager.create({ grantType: 'authorization_code' });
+    // Generate and store state for CSRF protection (MANDATORY per RFC 9700)
+    const state = stateManager.create({ grantType: 'authorization_code' });
 
     // Standard parameters
     url.searchParams.set('client_id', this.config.clientId);
@@ -138,9 +137,21 @@ export class AuthorizationCodeGrant extends OAuthClient {
         throw new OAuthClientError('No authorization code received');
       }
 
-      // Verify state if present
-      if (callbackResult.state && !stateManager.exists(callbackResult.state)) {
-        throw new OAuthClientError('Invalid state parameter - possible CSRF attack');
+      // MANDATORY state verification for CSRF protection (RFC 9700 compliance)
+      if (!callbackResult.state) {
+        throw new OAuthClientError(
+          'Missing state parameter in authorization callback. ' +
+            'This is a security violation - state parameter is mandatory for CSRF protection.',
+        );
+      }
+
+      // Verify state matches and is valid
+      const stateData = stateManager.verify(callbackResult.state);
+      if (!stateData) {
+        throw new OAuthClientError(
+          'Invalid or expired state parameter - possible CSRF attack. ' +
+            'State must be present, valid, and match the original request.',
+        );
       }
 
       logger.info('Authorization code received, exchanging for tokens...');
