@@ -1,0 +1,41 @@
+{
+  "providers": [
+    {
+      "id": "servicenow-oauth-test-1",
+      "name": "ServiceNow PDI OAuth Test 1",
+      "type": "servicenow",
+      "instanceUrl": "https://dev267474.service-now.com",
+      "clientId": "59fadc6d0c24031afa3d7f800185112",
+      "clientSecret": "+-pri~-v[~",
+      "tokenUrl": "https://dev267474.service-now.com/oauth_token.do",
+      "scope": "useraccount",
+      "fallbackAuth": {
+        "username": "oauth.user",
+        "password": "p9wL6sm7EWKEW@kXkE"
+      }
+    },
+    {
+      "id": "servicenow-oauth-test-2",
+      "name": "ServiceNow PDI OAuth Test 2",
+      "type": "servicenow",
+      "instanceUrl": "https://dev267474.service-now.com",
+      "clientId": "34c9baf9dd6a463b99ab4fdd36666e65c",
+      "clientSecret": "E;t#d0POBa",
+      "tokenUrl": "https://dev267474.service-now.com/oauth_token.do",
+      "scope": "useraccount",
+      "fallbackAuth": {
+        "username": "oauth.user",
+        "password": "p9wL6sm7EWKEW@kXkE"
+      }
+    },
+    {
+      "id": "servicenow-basic-auth-direct",
+      "name": "ServiceNow PDI Basic Auth Direct",
+      "type": "basic",
+      "instanceUrl": "https://dev267474.service-now.com",
+      "username": "oauth.user",
+      "password": "p9wL6sm7EWKEW@kXkE",
+      "description": "Direct basic auth since ServiceNow OAuth requires UI login"
+    }
+  ]
+}
