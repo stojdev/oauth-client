@@ -3,7 +3,8 @@
 ## Storage Location
 
 Tokens are securely stored in your home directory:
-```
+
+```plain
 ~/.oauth-client/tokens/tokens.enc
 ```
 
@@ -18,6 +19,7 @@ Tokens are securely stored in your home directory:
 ## CLI Commands
 
 ### Save a Token
+
 ```bash
 oauth token client-credentials \
   --token-url https://example.com/oauth/token \
@@ -27,22 +29,26 @@ oauth token client-credentials \
 ```
 
 ### List Stored Tokens
+
 ```bash
 oauth list-tokens
 ```
 
 ### Use a Stored Token
+
 ```bash
 # Tokens are automatically used when you use the same provider name
 oauth refresh my-token-name
 ```
 
 ### Clear All Tokens
+
 ```bash
 oauth clear-tokens
 ```
 
 ### Remove Specific Token
+
 ```bash
 oauth tokens:remove my-token-name
 ```
@@ -50,6 +56,7 @@ oauth tokens:remove my-token-name
 ## Security Notes
 
 1. **Encryption Key**: Set `TOKEN_ENCRYPTION_KEY` environment variable for production use
+
    ```bash
    export TOKEN_ENCRYPTION_KEY="your-32-character-encryption-key"
    ```

@@ -60,6 +60,24 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.js', '*.d.ts', 'coverage/**'],
+    // Configuration for JavaScript files (scripts and build configs)
+    files: ['scripts/**/*.js', 'esbuild.config.js', 'esbuild.config.cli.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off', // Build scripts and tools can use console
+    },
+  },
+  {
+    ignores: ['dist/**', 'node_modules/**', '*.d.ts', 'coverage/**', 'archive/**'],
   },
 ];

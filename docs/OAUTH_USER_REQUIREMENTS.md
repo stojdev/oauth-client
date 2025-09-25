@@ -5,24 +5,31 @@
 The OAuth Application User (Stefan Ojebom/OJESTE) must meet these requirements:
 
 ### 1. User Status Requirements
+
 - **Active**: User must be active (not deactivated)
 - **Not Locked**: Account cannot be locked (no failed login lockouts)
 - **Password Set**: User must have a valid password configured
 
 ### 2. User Settings to Check
+
 In the User record for Stefan Ojebom (OJESTE):
+
 - [ ] **Active** checkbox must be checked
 - [ ] **Locked out** checkbox must be unchecked
 - [ ] **Password needs reset** checkbox should be unchecked
 - [ ] **Web service access only** checkbox should be checked (for service accounts)
 
 ### 3. OAuth Entity Profile
+
 Check the OAuth Entity Profile related list:
+
 - [ ] Grant Type must include "Client Credentials"
 - [ ] Entity must be active
 
 ### 4. Roles (if needed)
+
 The user might need:
+
 - `rest_api_explorer` role for API access
 - Or specific roles based on what APIs will be accessed
 

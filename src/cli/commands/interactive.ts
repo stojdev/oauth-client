@@ -446,7 +446,7 @@ export class InteractiveCLI {
     logger.info(chalk.blue('🔄 Refresh Token'));
     logger.info('');
 
-    const providers = tokenManager.listProviders();
+    const providers = await tokenManager.listProviders();
 
     if (providers.length === 0) {
       logger.info(chalk.yellow('No stored tokens found'));
@@ -551,7 +551,7 @@ export class InteractiveCLI {
       ]);
       token = jwtToken;
     } else {
-      const providers = tokenManager.listProviders();
+      const providers = await tokenManager.listProviders();
       if (providers.length === 0) {
         logger.info(chalk.yellow('No stored tokens found'));
         return;
@@ -676,7 +676,7 @@ export class InteractiveCLI {
     logger.info(chalk.blue('📦 Token Management'));
     logger.info('');
 
-    const providers = tokenManager.listProviders();
+    const providers = await tokenManager.listProviders();
 
     const { action } = await inquirer.prompt([
       {

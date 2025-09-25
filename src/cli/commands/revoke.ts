@@ -128,7 +128,7 @@ export async function revokeAllCommand(
     force?: boolean;
   } = {},
 ): Promise<void> {
-  const providers = tokenManager.listProviders();
+  const providers = await tokenManager.listProviders();
 
   if (providers.length === 0) {
     logger.info(chalk.yellow('No stored tokens to revoke'));

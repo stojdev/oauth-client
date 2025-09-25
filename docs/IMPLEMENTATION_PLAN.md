@@ -58,7 +58,7 @@ A simple CLI tool to test OAuth 2.0 endpoints and retrieve access tokens for deb
 
 ## File Structure (SIMPLE)
 
-```
+```plain
 src/
 ├── cli/
 │   └── index.ts          # CLI commands
