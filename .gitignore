@@ -59,3 +59,6 @@ test-config.json
 test-init.json
 oauth-config.json
 tests/
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

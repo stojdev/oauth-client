@@ -4,6 +4,7 @@ import { MainDashboard } from './components/Dashboard/MainDashboard.js';
 import { EnhancedAuthWizard } from './components/Auth/EnhancedAuthWizard.js';
 import { EnhancedTokenManager } from './components/Token/EnhancedTokenManager.js';
 import { EnhancedConfigManager } from './components/Config/EnhancedConfigManager.js';
+import { TokenInspector } from './components/Inspector/TokenInspector.js';
 import { Header } from './components/Common/Header.js';
 import { MainMenu } from './components/MainMenu.js';
 import { HelpModal } from './components/Common/HelpModal.js';
@@ -109,11 +110,7 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
         {activeView === 'auth' && <EnhancedAuthWizard onComplete={() => setActiveView('dashboard')} onCancel={() => setActiveView('menu')} />}
         {activeView === 'tokens' && <EnhancedTokenManager />}
         {activeView === 'config' && <EnhancedConfigManager />}
-        {activeView === 'inspect' && (
-          <Box paddingY={1}>
-            <Text color="yellow">JWT Inspector - Coming Soon!</Text>
-          </Box>
-        )}
+        {activeView === 'inspect' && <TokenInspector />}
       </Box>
 
       <StatusBar activeView={activeView} />
