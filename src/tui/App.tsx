@@ -4,6 +4,7 @@ import { MainDashboard } from './components/Dashboard/MainDashboard.js';
 import { EnhancedAuthWizard } from './components/Auth/EnhancedAuthWizard.js';
 import { EnhancedTokenManager } from './components/Token/EnhancedTokenManager.js';
 import { EnhancedConfigManager } from './components/Config/EnhancedConfigManager.js';
+import { ConfigManager } from './screens/ConfigManager.js';
 import { TokenInspector } from './components/Inspector/TokenInspector.js';
 import { Header } from './components/Common/Header.js';
 import { MainMenu } from './components/MainMenu.js';
@@ -15,7 +16,7 @@ import { useKeyboard } from './hooks/useKeyboard.js';
 import { existsSync } from 'fs';
 import { join } from 'path';
 
-export type View = 'menu' | 'dashboard' | 'auth' | 'tokens' | 'config' | 'inspect' | 'help';
+export type View = 'menu' | 'dashboard' | 'auth' | 'tokens' | 'config' | 'inspect' | 'help' | 'config-manager';
 
 interface AppProps {
   initialView?: View;
@@ -111,6 +112,7 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
         {activeView === 'tokens' && <EnhancedTokenManager />}
         {activeView === 'config' && <EnhancedConfigManager />}
         {activeView === 'inspect' && <TokenInspector />}
+        {activeView === 'config-manager' && <ConfigManager onBack={() => setActiveView('menu')} />}
       </Box>
 
       <StatusBar activeView={activeView} />

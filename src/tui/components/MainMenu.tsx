@@ -54,6 +54,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelect, hasConfig = false 
       shortcut: 'c'
     },
     {
+      label: 'Config Manager',
+      value: 'config-manager',
+      icon: '🛠️',
+      description: 'Advanced configuration management and testing',
+      shortcut: 'm'
+    },
+    {
       label: 'Inspect Token',
       value: 'inspect',
       icon: '🔍',

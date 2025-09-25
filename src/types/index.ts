@@ -61,6 +61,8 @@ export interface DeviceCodeResponse {
 export interface ProviderConfig {
   name: string;
   displayName: string;
+  clientId?: string;
+  clientSecret?: string;
   authorizationUrl: string;
   tokenUrl: string;
   userInfoUrl?: string;
