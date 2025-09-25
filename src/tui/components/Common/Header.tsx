@@ -8,6 +8,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeView }) => {
   const tabs = [
+    { view: 'menu' as View, label: 'Menu', shortcut: 'Ctrl+M' },
     { view: 'dashboard' as View, label: 'Dashboard', shortcut: 'Ctrl+D' },
     { view: 'auth' as View, label: 'Auth', shortcut: 'Ctrl+A' },
     { view: 'tokens' as View, label: 'Tokens', shortcut: 'Ctrl+T' },

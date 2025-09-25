@@ -145,6 +145,30 @@ export class TokenManager {
   }
 
   /**
+   * Get all stored tokens
+   */
+  async getAllTokens(): Promise<StoredToken[]> {
+    await this.initialized;
+    const tokens: StoredToken[] = [];
+
+    for (const [, token] of this.tokens.entries()) {
+      // Filter out expired tokens
+      if (!isTokenExpired(token.expiresAt)) {
+        tokens.push(token);
+      }
+    }
+
+    return tokens;
+  }
+
+  /**
+   * Clear a specific provider's token
+   */
+  async clearToken(provider: string): Promise<void> {
+    return this.deleteToken(provider);
+  }
+
+  /**
    * Persist tokens to disk (encrypted)
    */
   private async persistTokens(): Promise<void> {

@@ -233,8 +233,8 @@ program
   .description('Start Terminal User Interface')
   .option(
     '-v, --view <view>',
-    'Initial view (dashboard, auth, tokens, config, inspect)',
-    'dashboard',
+    'Initial view (menu, dashboard, auth, tokens, config, inspect)',
+    'menu',
   )
   .action(async (options) => {
     const { tuiCommand } = await import('./commands/tui.js');
