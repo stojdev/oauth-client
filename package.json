@@ -35,7 +35,9 @@
     "check:no-mocks": "node scripts/check-no-mocks.js",
     "quality-gate": "pnpm run quality-gate:full",
     "quality-gate:full": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run build",
-    "quality-gate:quick": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint"
+    "quality-gate:quick": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint",
+    "git:status": "node scripts/git-status-helper.js",
+    "prepare": "husky"
   },
   "keywords": [
     "oauth",
@@ -63,6 +65,7 @@
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
     "jest": "^30.1.3",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.4",

@@ -204,7 +204,9 @@ export async function configListCommand(options?: { file?: string }): Promise<vo
 
     if (providers.length === 0) {
       logger.info(chalk.yellow('No providers configured'));
-      logger.info(`${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`);
+      logger.info(
+        `${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`,
+      );
       process.exit(0);
     }
 
@@ -225,7 +227,7 @@ export async function configListCommand(options?: { file?: string }): Promise<vo
     });
 
     logger.info(
-      `\n${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`
+      `\n${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`,
     );
     process.exit(0);
   } catch (error) {

@@ -53,3 +53,9 @@ credentials/
 *.key
 *.pem
 *.cert
+
+# Test configuration files
+test-config.json
+test-init.json
+oauth-config.json
+tests/

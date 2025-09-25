@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## RULES for Claude Code when working with this repository
 
-### The GOLDEN RULE that governs all other rules: ALWAYS prioritize code quality, security ZERO mock functionality, TODO:s (except where mock functionality makes sense in test cases etc.) and adherence to best practices above all else
+### The GOLDEN RULE that governs all other rules: ALWAYS prioritize code quality, security, ZERO mock functionality, TODO:s (except where mock functionality makes sense in test cases etc.) and adherence to best practices above all else
 
 The codebase must be of the highest quality, secure, production ready and free of mock implementations and TODOs. Any code that does not meet these standards must be refactored or removed.
 

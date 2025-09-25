@@ -1,0 +1,18 @@
+# Run quality gate check
+echo "🔍 Running quality gate checks..."
+pnpm run quality-gate:quick
+
+# Check for uncommitted files and provide information
+echo ""
+echo "📋 Git status check:"
+git status --short
+
+# If there are untracked or modified files, inform the user
+if [ -n "$(git status --porcelain)" ]; then
+  echo ""
+  echo "⚠️  Uncommitted changes detected:"
+  echo "   - Files in .gitignore are excluded automatically"
+  echo "   - Use 'git add .' to stage all changes"
+  echo "   - Or 'git add -u' to stage only modified tracked files"
+  echo ""
+fi
