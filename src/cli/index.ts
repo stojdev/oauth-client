@@ -205,8 +205,14 @@ program
   .command('log-level <level>')
   .description('Set logging level (error, warn, info, debug)')
   .action((level) => {
-    logger.level = level;
-    logger.info(chalk.green(`✓ Log level set to: ${level}`));
+    const validLevels = ['error', 'warn', 'info', 'debug'];
+    if (!validLevels.includes(level.toLowerCase())) {
+      logger.error(chalk.red(`✗ Invalid log level: ${level}`));
+      logger.info(chalk.yellow(`Valid levels are: ${validLevels.join(', ')}`));
+      process.exit(1);
+    }
+    logger.level = level.toLowerCase();
+    logger.info(chalk.green(`✓ Log level set to: ${level.toLowerCase()}`));
     process.exit(0);
   });
 

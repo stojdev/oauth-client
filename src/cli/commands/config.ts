@@ -18,6 +18,9 @@ export async function configInitCommand(options?: {
     const configLoader = new ConfigLoader();
     const providerManager = new ProviderConfigManager();
 
+    // Load default configuration
+    await configLoader.load({ configFile: options?.file, skipValidation: true });
+
     if (options?.interactive) {
       // Interactive mode
       const answers = await inquirer.prompt([
@@ -62,9 +65,10 @@ export async function configInitCommand(options?: {
 
     await configLoader.save(options?.file);
     logger.info(chalk.green('✓ Configuration initialized successfully'));
+    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Failed to initialize configuration:'), errorMessage);
+    logger.error(`${chalk.red('✗ Failed to initialize configuration:')} ${errorMessage}`);
     process.exit(1);
   }
 }
@@ -89,7 +93,7 @@ export async function configAddCommand(
     const configLoader = new ConfigLoader();
     const providerManager = new ProviderConfigManager();
 
-    await configLoader.load({ configFile: options?.file });
+    await configLoader.load({ configFile: options?.file, skipValidation: true });
 
     let config: ProviderConfig;
 
@@ -159,6 +163,7 @@ export async function configAddCommand(
         config = providerManager.createFromPreset(provider, {
           clientId: options.clientId,
           clientSecret: options.clientSecret,
+          redirectUri: 'http://localhost:8080/callback',
         });
       } else if (options?.clientId && options?.tokenUrl) {
         config = {
@@ -178,9 +183,10 @@ export async function configAddCommand(
     await configLoader.save(options?.file);
 
     logger.info(chalk.green(`✓ Provider '${provider}' added successfully`));
+    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Failed to add provider:'), errorMessage);
+    logger.error(`${chalk.red('✗ Failed to add provider:')} ${errorMessage}`);
     process.exit(1);
   }
 }
@@ -198,33 +204,33 @@ export async function configListCommand(options?: { file?: string }): Promise<vo
 
     if (providers.length === 0) {
       logger.info(chalk.yellow('No providers configured'));
-      logger.info(chalk.gray('Available presets:'), providerManager.listProviderIds().join(', '));
-      return;
+      logger.info(`${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`);
+      process.exit(0);
     }
 
     logger.info(chalk.blue('Configured providers:'));
     providers.forEach((provider) => {
       logger.info(`\n${chalk.green(provider.name)} (${provider.id})`);
-      logger.info(chalk.gray('  Client ID:'), provider.clientId);
-      logger.info(chalk.gray('  Token URL:'), provider.tokenUrl);
+      logger.info(`${chalk.gray('  Client ID:')} ${provider.clientId}`);
+      logger.info(`${chalk.gray('  Token URL:')} ${provider.tokenUrl}`);
       if (provider.authorizationUrl) {
-        logger.info(chalk.gray('  Auth URL:'), provider.authorizationUrl);
+        logger.info(`${chalk.gray('  Auth URL:')} ${provider.authorizationUrl}`);
       }
       if (provider.scope) {
-        logger.info(chalk.gray('  Scope:'), provider.scope);
+        logger.info(`${chalk.gray('  Scope:')} ${provider.scope}`);
       }
       if (provider.supportedGrantTypes) {
-        logger.info(chalk.gray('  Grants:'), provider.supportedGrantTypes.join(', '));
+        logger.info(`${chalk.gray('  Grants:')} ${provider.supportedGrantTypes.join(', ')}`);
       }
     });
 
     logger.info(
-      '\n' + chalk.gray('Available presets:'),
-      providerManager.listProviderIds().join(', '),
+      `\n${chalk.gray('Available presets:')} ${providerManager.listProviderIds().join(', ')}`
     );
+    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Failed to list configuration:'), errorMessage);
+    logger.error(`${chalk.red('✗ Failed to list configuration:')} ${errorMessage}`);
     process.exit(1);
   }
 }

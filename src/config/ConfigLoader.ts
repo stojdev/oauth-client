@@ -1,5 +1,5 @@
-import { readFileSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
+import { join, resolve, dirname } from 'path';
 import { homedir } from 'os';
 import yaml from 'js-yaml';
 import Ajv from 'ajv';
@@ -84,6 +84,7 @@ export class ConfigLoader {
     configFile?: string;
     provider?: string;
     overrides?: Partial<ProviderConfig>;
+    skipValidation?: boolean;
   }): Promise<AppConfig> {
     // 1. Load from file
     let config = this.loadFromFile(options?.configFile);
@@ -96,22 +97,24 @@ export class ConfigLoader {
       config = this.applyOverrides(config, options.overrides, options.provider);
     }
 
-    // 4. Validate configuration
-    const validation = this.validate(config);
-    if (!validation.valid) {
-      throw new Error(
-        `Configuration validation failed:\n${validation.errors.map((e) => `  - ${e.path}: ${e.message}`).join('\n')}`,
-      );
-    }
+    // 4. Validate configuration (skip if requested)
+    if (!options?.skipValidation) {
+      const validation = this.validate(config);
+      if (!validation.valid) {
+        throw new Error(
+          `Configuration validation failed:\n${validation.errors.map((e) => `  - ${e.path}: ${e.message}`).join('\n')}`,
+        );
+      }
 
-    // 5. Log warnings
-    if (validation.warnings.length > 0) {
-      validation.warnings.forEach((w) => {
-        logger.warn(`Config warning - ${w.path}: ${w.message}`);
-        if (w.recommendation) {
-          logger.info(`  Recommendation: ${w.recommendation}`);
-        }
-      });
+      // 5. Log warnings
+      if (validation.warnings.length > 0) {
+        validation.warnings.forEach((w) => {
+          logger.warn(`Config warning - ${w.path}: ${w.message}`);
+          if (w.recommendation) {
+            logger.info(`  Recommendation: ${w.recommendation}`);
+          }
+        });
+      }
     }
 
     this.config = config;
@@ -476,8 +479,7 @@ export class ConfigLoader {
       content = JSON.stringify(this.config, null, 2);
     }
 
-    const { writeFileSync, mkdirSync } = await import('fs');
-    const dir = savePath.substring(0, savePath.lastIndexOf('/'));
+    const dir = dirname(savePath);
 
     mkdirSync(dir, { recursive: true });
     writeFileSync(savePath, content, 'utf-8');
