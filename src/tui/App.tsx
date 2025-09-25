@@ -3,7 +3,7 @@ import { Box, Text, useApp } from 'ink';
 import { MainDashboard } from './components/Dashboard/MainDashboard.js';
 import { EnhancedAuthWizard } from './components/Auth/EnhancedAuthWizard.js';
 import { EnhancedTokenManager } from './components/Token/EnhancedTokenManager.js';
-import { ConfigManager } from './components/Config/ConfigManager.js';
+import { EnhancedConfigManager } from './components/Config/EnhancedConfigManager.js';
 import { Header } from './components/Common/Header.js';
 import { MainMenu } from './components/MainMenu.js';
 import { HelpModal } from './components/Common/HelpModal.js';
@@ -108,7 +108,7 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
         {activeView === 'dashboard' && <MainDashboard />}
         {activeView === 'auth' && <EnhancedAuthWizard onComplete={() => setActiveView('dashboard')} onCancel={() => setActiveView('menu')} />}
         {activeView === 'tokens' && <EnhancedTokenManager />}
-        {activeView === 'config' && <ConfigManager />}
+        {activeView === 'config' && <EnhancedConfigManager />}
         {activeView === 'inspect' && (
           <Box paddingY={1}>
             <Text color="yellow">JWT Inspector - Coming Soon!</Text>
