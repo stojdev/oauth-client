@@ -28,11 +28,16 @@ export async function tokenCommand(
     code?: string;
     usePkce?: boolean;
     save?: string;
-    output?: 'json' | 'text';
+    output?: 'json' | 'raw' | 'text';
   },
 ): Promise<void> {
   try {
-    logger.info(chalk.blue(`Requesting token using ${grantType} grant...`));
+    // Suppress logger output for raw/json formats
+    if (options.output === 'raw' || options.output === 'json') {
+      process.env.LOG_LEVEL = 'silent';
+    } else {
+      logger.info(chalk.blue(`Requesting token using ${grantType} grant...`));
+    }
 
     let token: TokenResponse;
 
@@ -168,23 +173,29 @@ export async function tokenCommand(
     }
 
     // Display token
-    if (options.output === 'json') {
-      logger.info(JSON.stringify(token, null, 2));
+    if (options.output === 'raw') {
+      // eslint-disable-next-line no-console
+      console.log(token.access_token);
+      process.exit(0);
+    } else if (options.output === 'json') {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(token, null, 2));
+      process.exit(0);
     } else {
       logger.info(chalk.green('✓ Successfully obtained token!'));
-      logger.info(chalk.gray('Token Type:'), token.token_type);
-      logger.info(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
+      logger.info(`${chalk.gray('Token Type:')} ${token.token_type}`);
+      logger.info(`${chalk.gray('Access Token:')} ${token.access_token.substring(0, 40)}...`);
 
       if (token.expires_in) {
-        logger.info(chalk.gray('Expires In:'), token.expires_in, 'seconds');
+        logger.info(`${chalk.gray('Expires In:')} ${token.expires_in} seconds`);
       }
 
       if (token.scope) {
-        logger.info(chalk.gray('Scope:'), token.scope);
+        logger.info(`${chalk.gray('Scope:')} ${token.scope}`);
       }
 
       if (token.refresh_token) {
-        logger.info(chalk.gray('Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
+        logger.info(`${chalk.gray('Refresh Token:')} ${token.refresh_token.substring(0, 40)}...`);
       }
 
       // Offer to copy token to clipboard
@@ -202,6 +213,9 @@ export async function tokenCommand(
       await tokenManager.storeToken(options.save, token);
       logger.info(chalk.green(`✓ Token saved as '${options.save}'`));
     }
+
+    // Ensure process exits cleanly
+    process.exit(0);
   } catch (error) {
     logger.error('Token request failed', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

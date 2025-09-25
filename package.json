@@ -75,6 +75,7 @@
     "commander": "^14.0.1",
     "dotenv": "^17.2.2",
     "inquirer": "^12.9.6",
+    "jose": "^6.1.0",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "winston": "^3.17.0"

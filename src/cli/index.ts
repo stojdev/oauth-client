@@ -10,6 +10,10 @@ import { refreshCommand } from './commands/refresh.js';
 import { configInitCommand, configAddCommand, configListCommand } from './commands/config.js';
 
 // Load environment variables
+// Suppress dotenv output when running as CLI
+if (!process.stdout.isTTY || process.env.DOTENV_CONFIG_QUIET === 'true') {
+  process.env.SUPPRESS_NO_CONFIG_WARNING = 'true';
+}
 dotenv.config();
 
 const program = new Command();
@@ -28,7 +32,7 @@ program
   .option('-p, --password <password>', 'Password (for password grant)')
   .option('-s, --scope <scope>', 'OAuth scope')
   .option('--no-save', 'Do not save token')
-  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .option('-o, --output <format>', 'Output format (json|raw|text)', 'text')
   .action(authCommand);
 
 // Token command - request token with specific grant
@@ -48,7 +52,7 @@ program
   .option('--code <code>', 'Authorization code')
   .option('--no-pkce', 'Disable PKCE')
   .option('--save <name>', 'Save token with name')
-  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .option('-o, --output <format>', 'Output format (json|raw|text)', 'text')
   .action(tokenCommand);
 
 // Refresh command
@@ -59,7 +63,7 @@ program
   .option('--client-secret <secret>', 'OAuth client secret')
   .option('--token-url <url>', 'Token endpoint URL')
   .option('--no-save', 'Do not save refreshed token')
-  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .option('-o, --output <format>', 'Output format (json|raw|text)', 'text')
   .action(refreshCommand);
 
 // Inspect command
@@ -152,11 +156,11 @@ program
   .alias('list-tokens')
   .description('List all stored tokens')
   .action(async () => {
-    const providers = tokenManager.listProviders();
+    const providers = await tokenManager.listProviders();
 
     if (providers.length === 0) {
       logger.info(chalk.yellow('No stored tokens found'));
-      return;
+      process.exit(0);
     }
 
     logger.info(chalk.blue('Stored tokens:'));
@@ -166,6 +170,7 @@ program
         logger.info(chalk.gray(`- ${provider}: ${token.access_token.substring(0, 20)}...`));
       }
     }
+    process.exit(0);
   });
 
 // Clear tokens
@@ -176,6 +181,7 @@ program
   .action(async () => {
     await tokenManager.clearAll();
     logger.info(chalk.green('✓ All tokens cleared'));
+    process.exit(0);
   });
 
 // Remove token
@@ -186,6 +192,7 @@ program
     try {
       await tokenManager.deleteToken(provider);
       logger.info(chalk.green(`✓ Token removed for provider: ${provider}`));
+      process.exit(0);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(chalk.red('✗ Failed to remove token:'), errorMessage);
@@ -200,6 +207,7 @@ program
   .action((level) => {
     logger.level = level;
     logger.info(chalk.green(`✓ Log level set to: ${level}`));
+    process.exit(0);
   });
 
 // Interactive mode

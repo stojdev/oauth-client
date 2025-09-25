@@ -107,6 +107,7 @@ export async function inspectCommand(
         // Clipboard not available
       }
     }
+    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(chalk.red('✗ Failed to inspect token:'), errorMessage);

@@ -13,6 +13,7 @@ export class TokenManager {
   private storageDir: string;
   private encryptionKey: Buffer;
   private tokens: Map<string, StoredToken> = new Map();
+  private initialized: Promise<void>;
 
   constructor(storageDir?: string) {
     this.storageDir = storageDir || path.join(os.homedir(), '.oauth-client', 'tokens');
@@ -21,7 +22,7 @@ export class TokenManager {
     this.encryptionKey = this.getOrCreateEncryptionKey();
 
     // Load existing tokens
-    this.loadTokens().catch((err) => {
+    this.initialized = this.loadTokens().catch((err) => {
       logger.error('Failed to load tokens', err);
     });
   }
@@ -30,6 +31,7 @@ export class TokenManager {
    * Store a token
    */
   async storeToken(provider: string, token: TokenResponse): Promise<void> {
+    await this.initialized;
     PerformanceLogger.start('token_store');
 
     const storedToken: StoredToken = {
@@ -62,6 +64,7 @@ export class TokenManager {
    * Retrieve a token
    */
   async getToken(provider: string): Promise<StoredToken | null> {
+    await this.initialized;
     const token = this.tokens.get(provider);
 
     if (!token) {
@@ -136,7 +139,8 @@ export class TokenManager {
   /**
    * List all stored providers
    */
-  listProviders(): string[] {
+  async listProviders(): Promise<string[]> {
+    await this.initialized;
     return Array.from(this.tokens.keys());
   }
 

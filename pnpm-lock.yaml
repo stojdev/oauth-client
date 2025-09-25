@@ -32,6 +32,9 @@ importers:
       inquirer:
         specifier: ^12.9.6
         version: 12.9.6(@types/node@24.5.2)
+      jose:
+        specifier: ^6.1.0
+        version: 6.1.0
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -1826,6 +1829,9 @@ packages:
     peerDependenciesMeta:
       node-notifier:
         optional: true
+
+  jose@6.1.0:
+    resolution: {integrity: sha512-TTQJyoEoKcC1lscpVDCSsVgYzUDg/0Bt3WE//WiTPK6uOCQC2KZS4MpugbMWt/zyjkopgZoXhZuCi00gLudfUA==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -4480,6 +4486,8 @@ snapshots:
       - esbuild-register
       - supports-color
       - ts-node
+
+  jose@6.1.0: {}
 
   js-tokens@4.0.0: {}
 
