@@ -1,11 +1,13 @@
 # OAuth 2.0 Test Client - Testing Guide
 
 ## Purpose
+
 This is an OAuth 2.0 test client for **testing and verifying Access Token retrieval** from OAuth providers.
 
 ## Quick Start Testing
 
 ### 1. Build the Client
+
 ```bash
 pnpm install
 pnpm build
@@ -14,6 +16,7 @@ pnpm build
 ### 2. Test Token Retrieval
 
 #### Option A: Client Credentials (Machine-to-Machine)
+
 The simplest test - no user interaction required:
 
 ```bash
@@ -26,6 +29,7 @@ node dist/cli.cjs token client_credentials \
 ```
 
 #### Option B: Authorization Code (User Login)
+
 Test with user authentication:
 
 ```bash
@@ -36,6 +40,7 @@ node dist/cli.cjs auth google \
 ```
 
 ### 3. Verify Token Retrieval
+
 ```bash
 # List retrieved tokens
 node dist/cli.cjs tokens:list
@@ -50,6 +55,7 @@ node dist/cli.cjs refresh google
 ## Testing with Popular Providers
 
 ### Google
+
 ```bash
 # 1. Get credentials from: https://console.cloud.google.com/
 # 2. Test discovery
@@ -62,6 +68,7 @@ node dist/cli.cjs auth google \
 ```
 
 ### GitHub
+
 ```bash
 # 1. Get credentials from: https://github.com/settings/developers
 # 2. Test with device flow (no redirect needed)
@@ -71,6 +78,7 @@ node dist/cli.cjs token device_code \
 ```
 
 ### Microsoft
+
 ```bash
 # 1. Get credentials from: https://portal.azure.com/
 # 2. Test discovery
@@ -104,6 +112,7 @@ node dist/cli.cjs auth microsoft \
 ## Automated Testing
 
 ### Run Provider Tests
+
 ```bash
 # Test specific provider
 node dist/cli.cjs test google --client-id ID --client-secret SECRET
@@ -113,6 +122,7 @@ node dist/cli.cjs test all --config oauth-config.json
 ```
 
 ### Check Token Operations
+
 ```bash
 # Simple retrieval test
 ./test-cli.sh
@@ -124,12 +134,14 @@ node test-token-retrieval.js
 ## Troubleshooting
 
 ### Token Retrieval Fails
+
 1. Check credentials are correct
 2. Verify redirect URI matches registration
 3. Check scopes are valid for provider
 4. Enable debug logging: `LOG_LEVEL=debug`
 
 ### Common Issues
+
 - **"Invalid client"** - Wrong client ID/secret
 - **"Invalid grant"** - Token expired or revoked
 - **"Invalid scope"** - Provider doesn't support requested scope
@@ -138,6 +150,7 @@ node test-token-retrieval.js
 ## What This Is NOT
 
 This is a **test client**, not a production OAuth library. It's designed to:
+
 - ✅ Test OAuth provider implementations
 - ✅ Verify token retrieval works
 - ✅ Debug OAuth configuration issues

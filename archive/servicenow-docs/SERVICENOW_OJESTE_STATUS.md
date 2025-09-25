@@ -1,43 +1,49 @@
 # ServiceNow OAuth Client "ojeste" - Status Report
 
 ## OAuth Client Configuration ✅ VERIFIED
-- **Instance**: https://devskandia.service-now.com
+
+- **Instance**: <https://devskandia.service-now.com>
 - **Client Name**: ojeste
 - **Client ID**: `0d08b5c2bed86dd05132321f2ba1dc3e`
 - **Client Secret**: `b7QWIjmkXI`
-- **Token Endpoint**: https://devskandia.service-now.com/oauth_token.do
-- **Auth Endpoint**: https://devskandia.service-now.com/oauth_auth.do
+- **Token Endpoint**: <https://devskandia.service-now.com/oauth_token.do>
+- **Auth Endpoint**: <https://devskandia.service-now.com/oauth_auth.do>
 - **Scope**: useraccount
 - **Status**: Active ✓
 
 ## Test Results
 
-### ✅ What's Working:
+### ✅ What's Working
+
 1. **OAuth Endpoint Active**: Successfully connecting to `oauth_token.do`
 2. **Client Credentials Valid**: ServiceNow recognizes the client ID and secret
 3. **OAuth Protocol Working**: Receiving proper OAuth error responses
 4. **Our Client Working**: Correctly formatting and sending OAuth requests
 
-### ❌ What's Blocking Token Retrieval:
+### ❌ What's Blocking Token Retrieval
 
 #### 1. Client Credentials Grant
+
 **Error**: `401 Unauthorized - access_denied`
 **Reason**: No OAuth Application User configured in ServiceNow
 **Solution**: In ServiceNow admin, configure an integration user for this OAuth client
 
 #### 2. Password Grant
+
 **Error**: `401 Unauthorized - access_denied`
 **Reason**: Need valid ServiceNow username and password
 **Solution**: Provide actual user credentials for the devskandia instance
 
 #### 3. Authorization Code Grant
+
 **Status**: Initiates successfully, opens browser
 **Blocker**: Requires user to complete login in browser
 **Solution**: Complete the interactive login flow
 
 ## Commands That WILL Work (with proper credentials)
 
-### Once you have valid username/password:
+### Once you have valid username/password
+
 ```bash
 node dist/cli.cjs token password \
   --client-id 0d08b5c2bed86dd05132321f2ba1dc3e \
@@ -48,7 +54,8 @@ node dist/cli.cjs token password \
   --scope useraccount
 ```
 
-### Once integration user is configured:
+### Once integration user is configured
+
 ```bash
 node dist/cli.cjs token client_credentials \
   --client-id 0d08b5c2bed86dd05132321f2ba1dc3e \
@@ -57,7 +64,8 @@ node dist/cli.cjs token client_credentials \
   --scope useraccount
 ```
 
-### For interactive browser login:
+### For interactive browser login
+
 ```bash
 node dist/cli.cjs auth servicenow-ojeste --config servicenow-ojeste-config.json
 # Then complete login in the browser that opens
@@ -74,6 +82,7 @@ Per **Rule #7** in CLAUDE.md: We need an ACTUAL access token, but we're blocked 
 ## What This Proves
 
 The OAuth test client is **100% functional and ready**. It:
+
 - ✅ Connects to ServiceNow OAuth endpoints
 - ✅ Sends properly formatted OAuth requests
 - ✅ Handles OAuth responses correctly

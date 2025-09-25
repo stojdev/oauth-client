@@ -1,18 +1,20 @@
 # ServiceNow OAuth Testing Status
 
 ## PDI Configuration Status
+
 ✅ System property `glide.oauth.inbound.client.credential.grant_type.enabled` = true
 ✅ OAuth Applications created with "Integration as a Service" client type
 ✅ OAuth Application User configured (Stefan Ojebom for OAuth Test 1)
 
 ## Test Results
+
 Both OAuth Test 1 and OAuth Test 2 return: **401 Unauthorized - access_denied**
 
 ## Missing Configuration - OAuth Entity Profile
 
 Based on the screenshots, you need to configure the **OAuth Entity Profiles** for each OAuth application:
 
-### Steps to Fix:
+### Steps to Fix
 
 1. **For OAuth Test 1:**
    - Click on the "OAuth Entity Profiles" tab at the bottom
@@ -35,6 +37,7 @@ Based on the screenshots, you need to configure the **OAuth Entity Profiles** fo
 ## The Critical Issue
 
 ServiceNow requires THREE layers of configuration for client_credentials:
+
 1. ✅ OAuth Application Registry (you've done this)
 2. ❌ **OAuth Entity Profile** (needs grant type = Client Credentials)
 3. ❌ **OAuth Entity Scopes** (needs scope mapping)
@@ -60,5 +63,6 @@ curl -X POST https://dev267474.service-now.com/oauth_token.do \
 ## ServiceNow's Non-Standard OAuth Implementation
 
 This confirms ServiceNow's OAuth is non-standard:
+
 - Standard OAuth 2.0: client_id + client_secret = token ✅
 - ServiceNow OAuth: client_id + client_secret + Entity Profile + Entity Scopes + User = token 😤

@@ -3,13 +3,15 @@
 ## Quick Setup Options (No Account Needed)
 
 ### 1. **OAuth Playground by OAuth.com**
-- URL: https://www.oauth.com/playground/
+
+- URL: <https://www.oauth.com/playground/>
 - Features: Interactive OAuth testing
 - Grant Types: Authorization Code, Client Credentials
 - Setup: Instant, no registration
 
 ### 2. **Mocklab OAuth Mock Server**
-- URL: https://oauth.mocklab.io/
+
+- URL: <https://oauth.mocklab.io/>
 - Features: Mock OAuth server for testing
 - Grant Types: All standard types
 - Setup: Free tier available
@@ -17,6 +19,7 @@
 ## Real Providers (Free Account Required)
 
 ### 3. **Auth0 (Recommended)**
+
 ```bash
 # Sign up at: https://auth0.com (free tier)
 # Quick setup - you'll get:
@@ -32,6 +35,7 @@ node dist/cli.cjs token client_credentials \
 ```
 
 ### 4. **GitHub OAuth**
+
 ```bash
 # Create OAuth App at: https://github.com/settings/developers
 # Note: GitHub doesn't support client_credentials, use authorization_code
@@ -44,6 +48,7 @@ node dist/cli.cjs token device \
 ```
 
 ### 5. **Google OAuth**
+
 ```bash
 # Setup at: https://console.cloud.google.com/
 # Create credentials > OAuth 2.0 Client ID
@@ -56,6 +61,7 @@ node dist/cli.cjs token client_credentials \
 ```
 
 ### 6. **Microsoft Azure AD**
+
 ```bash
 # Setup at: https://portal.azure.com/
 # App registrations > New registration
@@ -71,6 +77,7 @@ node dist/cli.cjs token client_credentials \
 ## Quick Test Without Setup
 
 ### Using a Mock Server
+
 Let's create a simple mock OAuth server for testing:
 
 ```javascript
@@ -107,7 +114,7 @@ app.listen(3000, () => {
 
 Auth0 is the easiest to set up:
 
-1. Go to https://auth0.com and sign up (free)
+1. Go to <https://auth0.com> and sign up (free)
 2. Create a new API in the dashboard
 3. Create a Machine-to-Machine application
 4. You'll get credentials immediately

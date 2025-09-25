@@ -226,4 +226,19 @@ program
     await interactiveCommand();
   });
 
+// TUI mode
+program
+  .command('tui')
+  .alias('ui')
+  .description('Start Terminal User Interface')
+  .option(
+    '-v, --view <view>',
+    'Initial view (dashboard, auth, tokens, config, inspect)',
+    'dashboard',
+  )
+  .action(async (options) => {
+    const { tuiCommand } = await import('./commands/tui.js');
+    await tuiCommand(options);
+  });
+
 program.parse(process.argv);

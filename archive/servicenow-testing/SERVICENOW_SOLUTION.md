@@ -17,6 +17,7 @@ After extensive research using Context7 and Brave Search, combined with practica
 **ServiceNow requires the OAuth Application User to authenticate via the web UI at least once before OAuth tokens can be issued.**
 
 This is confirmed by:
+
 - ServiceNow Knowledge Base articles (KB0745184, KB1645212)
 - Community discussions
 - Our practical testing
@@ -115,6 +116,7 @@ API access: Working ✅
 ### For Other OAuth Providers
 
 The toolkit works normally with standard-compliant OAuth providers:
+
 - Google OAuth ✅
 - Microsoft Azure AD ✅
 - GitHub OAuth ✅

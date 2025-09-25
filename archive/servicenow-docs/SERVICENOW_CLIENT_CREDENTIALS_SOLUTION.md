@@ -1,6 +1,7 @@
 # ServiceNow Client Credentials Grant - Complete Solution
 
 ## The Problem
+
 You're correct - `client_id` and `client_secret` ARE valid credentials for OAuth 2.0 client_credentials grant per RFC 6749 Section 4.4.
 
 ## Why It's Not Working on ServiceNow
@@ -8,20 +9,24 @@ You're correct - `client_id` and `client_secret` ARE valid credentials for OAuth
 ServiceNow requires TWO things for client_credentials grant to work:
 
 ### 1. System Property Must Be Enabled
+
 ```
 Property: glide.oauth.inbound.client.credential.grant_type.enabled
 Value: true
 ```
 
 **To enable in ServiceNow:**
+
 1. Navigate to: `sys_properties.list`
 2. Create new property: `glide.oauth.inbound.client.credential.grant_type.enabled`
 3. Set value to: `true`
 
 ### 2. OAuth Application User Must Be Configured
+
 The "ojeste" OAuth client needs an OAuth Application User configured.
 
 **To configure in ServiceNow:**
+
 1. Navigate to: `System OAuth > Application Registry`
 2. Open the "ojeste" OAuth application
 3. In the "OAuth Entity" related list, add an OAuth Application User
@@ -61,6 +66,7 @@ curl -X POST https://devskandia.service-now.com/oauth_token.do \
 ## Current Error Explained
 
 The error we're getting:
+
 ```json
 {
   "error": "server_error",
@@ -69,6 +75,7 @@ The error we're getting:
 ```
 
 This occurs because:
+
 1. The system property might not be enabled
 2. No OAuth Application User is configured for the "ojeste" client
 3. The ServiceNow instance expects a user context even for client_credentials
@@ -78,7 +85,9 @@ This occurs because:
 If you can't modify the ServiceNow configuration, try:
 
 ### 1. Resource Owner Password Grant
+
 If you have a valid username/password:
+
 ```bash
 curl -X POST https://devskandia.service-now.com/oauth_token.do \
   -d "grant_type=password" \
@@ -90,7 +99,9 @@ curl -X POST https://devskandia.service-now.com/oauth_token.do \
 ```
 
 ### 2. Authorization Code Grant
+
 Interactive browser-based flow:
+
 ```bash
 node dist/cli.cjs auth servicenow-ojeste --config servicenow-ojeste-config.json
 # Complete login in browser
@@ -99,6 +110,7 @@ node dist/cli.cjs auth servicenow-ojeste --config servicenow-ojeste-config.json
 ## Verification That Our Client Works
 
 Our OAuth client correctly:
+
 - ✅ Sends proper client_credentials grant request per RFC 6749
 - ✅ Includes client_id and client_secret correctly
 - ✅ Formats the request properly

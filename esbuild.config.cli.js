@@ -6,6 +6,7 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
 const dependencies = Object.keys(pkg.dependencies || {});
 
 // Remove ESM-only packages from external list so they get bundled
+// Keep TUI dependencies external since they require ESM
 const externalDeps = dependencies.filter(dep =>
   !['chalk', 'inquirer', 'clipboardy'].includes(dep)
 );
