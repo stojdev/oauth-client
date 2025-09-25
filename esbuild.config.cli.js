@@ -5,24 +5,18 @@ import { readFileSync } from 'fs';
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
 const dependencies = Object.keys(pkg.dependencies || {});
 
-// Remove ESM-only packages from external list so they get bundled
-// Keep TUI dependencies external since they require ESM
-const externalDeps = dependencies.filter(dep =>
-  !['chalk', 'inquirer', 'clipboardy'].includes(dep)
-);
-
+// Create a wrapper script that properly handles ESM
 const buildOptions = {
-  entryPoints: ['./src/cli/index.ts'],
-  outfile: 'dist/cli.cjs',
-  bundle: true,
+  entryPoints: ['./src/cli/wrapper.mjs'],
+  outfile: 'dist/cli.mjs',  // Use .mjs extension for explicit ESM
+  bundle: false,  // Don't bundle, just copy
   platform: 'node',
   target: 'node18',
-  sourcemap: true,
-  format: 'cjs',  // Use CommonJS for the CLI to work with shebang
-  minify: process.env.NODE_ENV === 'production',
+  sourcemap: false,
+  format: 'esm',  // Use ES modules throughout
+  minify: false,
   logLevel: 'info',
-  // Only mark non-ESM dependencies as external
-  external: externalDeps,
+  external: [],
   banner: {
     js: '#!/usr/bin/env node',
   },

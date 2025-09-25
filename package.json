@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "oauth": "dist/cli.cjs",
-    "oauth-client": "dist/cli.cjs"
+    "oauth": "dist/cli.mjs",
+    "oauth-client": "dist/cli.mjs"
   },
   "scripts": {
     "build": "node esbuild.config.js && node esbuild.config.cli.js",
@@ -15,7 +15,7 @@
     "build:cli": "node esbuild.config.cli.js",
     "build:tsc": "tsc",
     "build:watch": "node esbuild.config.js --watch",
-    "postbuild": "chmod +x dist/cli.cjs",
+    "postbuild": "chmod +x dist/cli.mjs",
     "link:global": "pnpm link --global",
     "unlink:global": "pnpm unlink --global",
     "start": "node dist/index.js",
