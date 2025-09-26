@@ -6,6 +6,11 @@ import sys
 from textual.app import App
 from textual.binding import Binding
 
+from .screens.auth import AuthScreen
+from .screens.config import ConfigScreen
+from .screens.dashboard import DashboardScreen
+from .screens.help import HelpScreen
+from .screens.inspector import InspectorScreen
 from .screens.menu import MenuScreen
 from .screens.tokens import TokensScreen
 from .services.oauth_client import OAuthClient
@@ -63,12 +68,11 @@ class OAuthTUI(App):
         # Install screens
         self.install_screen(MenuScreen(), name="menu")
         self.install_screen(TokensScreen(), name="tokens")
-
-        # TODO: Add other screens as they are implemented
-        # self.install_screen(DashboardScreen(self.oauth_service), name="dashboard")
-        # self.install_screen(AuthScreen(self.oauth_service), name="auth")
-        # self.install_screen(ConfigScreen(self.oauth_service), name="config")
-        # self.install_screen(InspectorScreen(self.oauth_service), name="inspector")
+        self.install_screen(DashboardScreen(), name="dashboard")
+        self.install_screen(AuthScreen(), name="auth")
+        self.install_screen(ConfigScreen(), name="config")
+        self.install_screen(InspectorScreen(), name="inspector")
+        self.install_screen(HelpScreen(), name="help")
 
         # Push initial screen
         if self.initial_view == "tokens":
