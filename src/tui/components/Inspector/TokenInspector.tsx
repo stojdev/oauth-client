@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import { JWTInspector } from './JWTInspector.js';
@@ -20,7 +20,8 @@ export const TokenInspector: React.FC = () => {
   const [selectedToken, setSelectedToken] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const tokenManager = new TokenManager();
+  // Create single instance using useMemo to prevent memory leaks
+  const tokenManager = useMemo(() => new TokenManager(), []);
   const { showNotification } = useNotification();
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
@@ -31,7 +31,8 @@ export const EnhancedTokenManager: React.FC = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
-  const tokenManager = new TokenManager();
+  // Create single instance of TokenManager using useMemo to prevent memory leaks
+  const tokenManager = useMemo(() => new TokenManager(), []);
   const { showNotification } = useNotification();
 
   useEffect(() => {

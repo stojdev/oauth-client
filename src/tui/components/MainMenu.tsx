@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Box, Text, useApp } from 'ink';
 import Gradient from 'ink-gradient';
 import { useKeyboard } from '../hooks/useKeyboard.js';
@@ -18,74 +18,83 @@ interface MainMenuProps {
   hasConfig?: boolean;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({ onSelect, hasConfig = false }) => {
+// Static menu configuration to prevent recreation on every render
+const BASE_MENU_OPTIONS: Omit<MenuOption, 'disabled'>[] = [
+  {
+    label: 'Dashboard',
+    value: 'dashboard',
+    icon: '📊',
+    description: 'View system status and metrics',
+    shortcut: 'd'
+  },
+  {
+    label: 'Authenticate',
+    value: 'auth',
+    icon: '🔐',
+    description: 'Configure and test OAuth authentication',
+    shortcut: 'a'
+  },
+  {
+    label: 'View Tokens',
+    value: 'tokens',
+    icon: '🎫',
+    description: 'View and manage stored tokens',
+    shortcut: 't'
+  },
+  {
+    label: 'Configuration',
+    value: 'config',
+    icon: '⚙️',
+    description: 'Manage OAuth provider configurations',
+    shortcut: 'c'
+  },
+  {
+    label: 'Config Manager',
+    value: 'config-manager',
+    icon: '🛠️',
+    description: 'Advanced configuration management and testing',
+    shortcut: 'm'
+  },
+  {
+    label: 'Inspect Token',
+    value: 'inspect',
+    icon: '🔍',
+    description: 'Decode and inspect JWT tokens',
+    shortcut: 'i'
+  },
+  {
+    label: 'Help Center',
+    value: 'help-center',
+    icon: '❓',
+    description: 'Interactive tutorials and help system',
+    shortcut: 'h'
+  },
+  {
+    label: 'Exit',
+    value: 'exit',
+    icon: '❌',
+    description: 'Exit the application',
+    shortcut: 'q'
+  },
+] as const;
+
+const MainMenuComponent: React.FC<MainMenuProps> = ({ onSelect, hasConfig = false }) => {
   const { exit } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { showNotification } = useNotification();
 
-  const menuOptions: MenuOption[] = [
-    {
-      label: 'Dashboard',
-      value: 'dashboard',
-      icon: '📊',
-      description: 'View system status and metrics',
-      shortcut: 'd'
-    },
-    {
-      label: 'Authenticate',
-      value: 'auth',
-      icon: '🔐',
-      description: 'Configure and test OAuth authentication',
-      shortcut: 'a',
-      disabled: !hasConfig
-    },
-    {
-      label: 'View Tokens',
-      value: 'tokens',
-      icon: '🎫',
-      description: 'View and manage stored tokens',
-      shortcut: 't'
-    },
-    {
-      label: 'Configuration',
-      value: 'config',
-      icon: '⚙️',
-      description: 'Manage OAuth provider configurations',
-      shortcut: 'c'
-    },
-    {
-      label: 'Config Manager',
-      value: 'config-manager',
-      icon: '🛠️',
-      description: 'Advanced configuration management and testing',
-      shortcut: 'm'
-    },
-    {
-      label: 'Inspect Token',
-      value: 'inspect',
-      icon: '🔍',
-      description: 'Decode and inspect JWT tokens',
-      shortcut: 'i'
-    },
-    {
-      label: 'Help',
-      value: 'help',
-      icon: '❓',
-      description: 'Show help and keyboard shortcuts',
-      shortcut: 'h'
-    },
-    {
-      label: 'Exit',
-      value: 'exit',
-      icon: '❌',
-      description: 'Exit the application',
-      shortcut: 'q'
-    },
-  ];
+  // Memoize menu options based on hasConfig to prevent unnecessary recalculations
+  const menuOptions = useMemo(() => BASE_MENU_OPTIONS.map(option => ({
+    ...option,
+    disabled: option.value === 'auth' ? !hasConfig : undefined
+  })), [hasConfig]);
 
-  const availableOptions = menuOptions.filter(opt => !opt.disabled);
+  // Memoize available options to prevent unnecessary filtering
+  const availableOptions = useMemo(() =>
+    menuOptions.filter(opt => !opt.disabled), [menuOptions]);
 
-  const handleSelect = (option: MenuOption) => {
+  // Memoize handlers to prevent recreation on every render
+  const handleSelect = useCallback((option: MenuOption) => {
     if (option.disabled) {
       showNotification('This option requires configuration', 'warning');
       return;
@@ -96,27 +105,41 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelect, hasConfig = false 
     } else {
       onSelect(option.value);
     }
-  };
+  }, [showNotification, exit, onSelect]);
+
+  const handleUp = useCallback(() => {
+    setSelectedIndex(prev => (prev - 1 + availableOptions.length) % availableOptions.length);
+  }, [availableOptions.length]);
+
+  const handleDown = useCallback(() => {
+    setSelectedIndex(prev => (prev + 1) % availableOptions.length);
+  }, [availableOptions.length]);
+
+  const handleEnter = useCallback(() => {
+    handleSelect(availableOptions[selectedIndex]);
+  }, [handleSelect, availableOptions, selectedIndex]);
+
+  // Memoize keyboard shortcuts to prevent recreation
+  const keyboardShortcuts = useMemo(() => {
+    const shortcuts = {
+      up: handleUp,
+      down: handleDown,
+      enter: handleEnter,
+    } as Record<string, () => void>;
+
+    // Add shortcut keys for each option
+    availableOptions.forEach(option => {
+      if (option.shortcut) {
+        shortcuts[option.shortcut] = () => handleSelect(option);
+      }
+    });
+
+    return shortcuts;
+  }, [handleUp, handleDown, handleEnter, availableOptions, handleSelect]);
 
   // Handle keyboard shortcuts
   useKeyboard({
-    shortcuts: {
-      up: () => {
-        setSelectedIndex(prev => (prev - 1 + availableOptions.length) % availableOptions.length);
-      },
-      down: () => {
-        setSelectedIndex(prev => (prev + 1) % availableOptions.length);
-      },
-      enter: () => {
-        handleSelect(availableOptions[selectedIndex]);
-      },
-      ...availableOptions.reduce((acc, option) => {
-        if (option.shortcut) {
-          acc[option.shortcut] = () => handleSelect(option);
-        }
-        return acc;
-      }, {} as Record<string, () => void>),
-    },
+    shortcuts: keyboardShortcuts,
     enabled: true
   });
 
@@ -179,3 +202,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelect, hasConfig = false 
     </Box>
   );
 };
+
+// Memoize MainMenu component to prevent unnecessary re-renders
+// Only re-renders when onSelect, hasConfig change
+export const MainMenu = React.memo<MainMenuProps>(MainMenuComponent, (prevProps, nextProps) => {
+  return prevProps.onSelect === nextProps.onSelect &&
+         prevProps.hasConfig === nextProps.hasConfig;
+});

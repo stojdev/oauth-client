@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Text, useApp } from 'ink';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Box, Text, useApp, useStdout } from 'ink';
 import { MainDashboard } from './components/Dashboard/MainDashboard.js';
 import { EnhancedAuthWizard } from './components/Auth/EnhancedAuthWizard.js';
 import { EnhancedTokenManager } from './components/Token/EnhancedTokenManager.js';
@@ -23,12 +23,27 @@ interface AppProps {
   initialView?: View;
 }
 
+// Single static header component that never re-renders
+const StaticHeader = React.memo<{ activeView: View }>(({ activeView }) => {
+  const headerRef = useRef<boolean>(false);
+
+  // Only render once
+  if (headerRef.current) {
+    return null;
+  }
+  headerRef.current = true;
+
+  return <Header activeView={activeView} />;
+}, () => true); // Never re-render
+
 const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
   const [activeView, setActiveView] = useState<View>(initialView);
   const [showHelp, setShowHelp] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [hasConfig, setHasConfig] = useState(false);
+  const [headerKey, setHeaderKey] = useState(0);
   const { exit } = useApp();
+  const { stdout } = useStdout();
 
   // Check for configuration
   useEffect(() => {
@@ -46,23 +61,35 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
   }, []);
 
   const handleViewChange = useCallback((newView: string) => {
+    // Clear the screen completely before changing views
+    if (stdout) {
+      stdout.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to top
+    }
+
+    // Force header to re-initialize
+    setHeaderKey(prev => prev + 1);
+
     if (newView === 'help') {
       setShowHelp(true);
     } else {
       setActiveView(newView as View);
     }
-  }, []);
+  }, [stdout]);
 
   const handleBack = useCallback(() => {
     if (showHelp) {
       setShowHelp(false);
     } else if (activeView !== 'menu') {
+      if (stdout) {
+        stdout.write('\x1b[2J\x1b[H');
+      }
+      setHeaderKey(prev => prev + 1);
       setActiveView('menu');
     } else {
       setIsExiting(true);
       setTimeout(() => exit(), 100);
     }
-  }, [showHelp, activeView, exit]);
+  }, [showHelp, activeView, exit, stdout]);
 
   // Memoize keyboard shortcuts to prevent recreation on every render
   const keyboardShortcuts = useMemo(() => ({
@@ -74,15 +101,15 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
       }
     },
     '?': () => setShowHelp(true),
-    'h': () => setActiveView('help-center'),
-    'F1': () => setActiveView('help-center'),
-    'ctrl+d': () => setActiveView('dashboard'),
-    'ctrl+a': () => hasConfig && setActiveView('auth'),
-    'ctrl+t': () => setActiveView('tokens'),
-    'ctrl+c': () => setActiveView('config'),
-    'ctrl+i': () => setActiveView('inspect'),
-    'ctrl+m': () => setActiveView('menu'),
-  }), [handleBack, activeView, isExiting, exit, hasConfig]);
+    'h': () => handleViewChange('help-center'),
+    'F1': () => handleViewChange('help-center'),
+    'ctrl+d': () => handleViewChange('dashboard'),
+    'ctrl+a': () => hasConfig && handleViewChange('auth'),
+    'ctrl+t': () => handleViewChange('tokens'),
+    'ctrl+c': () => handleViewChange('config'),
+    'ctrl+i': () => handleViewChange('inspect'),
+    'ctrl+m': () => handleViewChange('menu'),
+  }), [handleBack, handleViewChange, activeView, isExiting, exit, hasConfig]);
 
   // Global keyboard shortcuts
   useKeyboard({
@@ -98,9 +125,34 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
     );
   }
 
+  // Create a completely new render tree on each view change
+  const renderContent = () => {
+    switch (activeView) {
+      case 'menu':
+        return <MainMenu onSelect={handleViewChange} hasConfig={hasConfig} />;
+      case 'dashboard':
+        return <MainDashboard />;
+      case 'auth':
+        return <EnhancedAuthWizard onComplete={() => setActiveView('dashboard')} onCancel={() => setActiveView('menu')} />;
+      case 'tokens':
+        return <EnhancedTokenManager />;
+      case 'config':
+        return <EnhancedConfigManager />;
+      case 'inspect':
+        return <TokenInspector />;
+      case 'config-manager':
+        return <ConfigManager onBack={() => setActiveView('menu')} />;
+      case 'help-center':
+        return <HelpCenter onBack={() => setActiveView('menu')} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Box flexDirection="column" minHeight={20} height="100%">
-      <Box flexShrink={0}>
+    <Box key={headerKey} flexDirection="column" minHeight={20} height="100%">
+      {/* Single header instance that gets recreated with new key */}
+      <Box key={`header-${headerKey}`} flexShrink={0}>
         <Header activeView={activeView} />
       </Box>
 
@@ -111,16 +163,7 @@ const AppContent: React.FC<AppProps> = ({ initialView = 'menu' }) => {
           </Box>
         )}
 
-        {activeView === 'menu' && (
-          <MainMenu onSelect={handleViewChange} hasConfig={hasConfig} />
-        )}
-        {activeView === 'dashboard' && <MainDashboard />}
-        {activeView === 'auth' && <EnhancedAuthWizard onComplete={() => setActiveView('dashboard')} onCancel={() => setActiveView('menu')} />}
-        {activeView === 'tokens' && <EnhancedTokenManager />}
-        {activeView === 'config' && <EnhancedConfigManager />}
-        {activeView === 'inspect' && <TokenInspector />}
-        {activeView === 'config-manager' && <ConfigManager onBack={() => setActiveView('menu')} />}
-        {activeView === 'help-center' && <HelpCenter onBack={() => setActiveView('menu')} />}
+        {renderContent()}
       </Box>
 
       <Box flexShrink={0}>

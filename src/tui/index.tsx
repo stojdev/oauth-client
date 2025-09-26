@@ -1,7 +1,17 @@
 import { render } from 'ink';
-import { App, View } from './App.js';
+import { App, View } from './SingleHeaderApp.js';
+
+// Keep track of whether TUI is already running
+let isRunning = false;
+let currentApp: ReturnType<typeof render> | null = null;
 
 export async function startTUI(initialView?: View) {
+  // Prevent multiple instances
+  if (isRunning) {
+    console.error('TUI is already running');
+    return;
+  }
+
   // Check if we're in a TTY environment
   if (!process.stdout.isTTY) {
     console.error('Error: TUI requires an interactive terminal (TTY)');
@@ -9,35 +19,37 @@ export async function startTUI(initialView?: View) {
     process.exit(1);
   }
 
+  isRunning = true;
+
   // Default to menu if no view specified
   const view = initialView || 'menu';
 
-  let app: ReturnType<typeof render> | null = null;
+  // Clear the console before starting
+  console.clear();
 
   // Cleanup handler to prevent EIO errors
   const cleanup = () => {
-    if (app) {
-      app.unmount();
-      app = null;
+    if (currentApp) {
+      currentApp.unmount();
+      currentApp = null;
     }
+    isRunning = false;
+    // Remove event listeners to prevent duplication
+    process.removeListener('SIGINT', cleanup);
+    process.removeListener('SIGTERM', cleanup);
     // Give the terminal a moment to reset
     setTimeout(() => {
       process.exit(0);
     }, 50);
   };
 
-  // Handle various exit signals
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
-  process.on('exit', () => {
-    if (app) {
-      app.unmount();
-    }
-  });
+  // Handle various exit signals (only if not already registered)
+  process.once('SIGINT', cleanup);
+  process.once('SIGTERM', cleanup);
 
   try {
-    app = render(<App initialView={view} />);
-    await app.waitUntilExit();
+    currentApp = render(<App initialView={view} />);
+    await currentApp.waitUntilExit();
     cleanup();
   } catch (error) {
     if (error instanceof Error && error.message.includes('EIO')) {
@@ -45,6 +57,7 @@ export async function startTUI(initialView?: View) {
       cleanup();
     } else {
       console.error('TUI Error:', error);
+      cleanup();
       process.exit(1);
     }
   }

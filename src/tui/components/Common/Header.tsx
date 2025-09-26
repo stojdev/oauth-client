@@ -6,15 +6,17 @@ interface HeaderProps {
   activeView: View;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeView }) => {
-  const tabs = [
-    { view: 'menu' as View, label: 'Menu', shortcut: 'Ctrl+M' },
-    { view: 'dashboard' as View, label: 'Dashboard', shortcut: 'Ctrl+D' },
-    { view: 'auth' as View, label: 'Auth', shortcut: 'Ctrl+A' },
-    { view: 'tokens' as View, label: 'Tokens', shortcut: 'Ctrl+T' },
-    { view: 'config' as View, label: 'Config', shortcut: 'Ctrl+C' },
-    { view: 'inspect' as View, label: 'Inspect', shortcut: 'Ctrl+I' },
-  ];
+// Memoized tabs configuration to prevent recreation on every render
+const TABS_CONFIG = [
+  { view: 'menu' as View, label: 'Menu', shortcut: 'Ctrl+M' },
+  { view: 'dashboard' as View, label: 'Dashboard', shortcut: 'Ctrl+D' },
+  { view: 'auth' as View, label: 'Auth', shortcut: 'Ctrl+A' },
+  { view: 'tokens' as View, label: 'Tokens', shortcut: 'Ctrl+T' },
+  { view: 'config' as View, label: 'Config', shortcut: 'Ctrl+C' },
+  { view: 'inspect' as View, label: 'Inspect', shortcut: 'Ctrl+I' },
+] as const;
+
+const HeaderComponent: React.FC<HeaderProps> = ({ activeView }) => {
 
   return (
     <Box
@@ -32,17 +34,26 @@ export const Header: React.FC<HeaderProps> = ({ activeView }) => {
       </Box>
 
       <Box marginTop={1} gap={2}>
-        {tabs.map((tab) => (
-          <Box key={tab.view}>
-            <Text
-              color={activeView === tab.view ? 'green' : 'gray'}
-              bold={activeView === tab.view}
-            >
-              [{tab.shortcut}] {tab.label}
-            </Text>
-          </Box>
-        ))}
+        {TABS_CONFIG.map((tab) => {
+          const isActive = activeView === tab.view;
+          return (
+            <Box key={tab.view}>
+              <Text
+                color={isActive ? 'green' : 'gray'}
+                bold={isActive}
+              >
+                [{tab.shortcut}] {tab.label}
+              </Text>
+            </Box>
+          );
+        })}
       </Box>
     </Box>
   );
 };
+
+// Memoize Header component to prevent unnecessary re-renders
+// Only re-renders when activeView changes
+export const Header = React.memo<HeaderProps>(HeaderComponent, (prevProps, nextProps) => {
+  return prevProps.activeView === nextProps.activeView;
+});
