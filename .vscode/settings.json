@@ -1,0 +1,6 @@
+{
+  "terminal.integrated.environmentChangesRelaunch": true,
+  "terminal.integrated.environmentChangesIndicator": "off",
+  "python.terminal.activateEnvironment": true,
+  "python.defaultInterpreterPath": "./python-tui/venv/bin/python"
+}

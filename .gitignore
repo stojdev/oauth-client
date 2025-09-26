@@ -29,12 +29,20 @@ yarn.lock
 .env.test
 .env.production
 
-# IDE
-.vscode/
+# IDE (keep Python-specific VS Code settings)
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
 .idea/
 *.sublime-project
 *.sublime-workspace
 .DS_Store
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
 # Debug
 *.map
@@ -62,5 +70,21 @@ tests/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# Python testing artifacts
 python-tui/.pytest_cache/
 **/.pytest_cache/
+*.html
+snapshot_report.html
+*.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Python virtual environments
+python-tui/venv/
+python-tui/.venv/
+venv/
+.venv/
+env/
+.env/
