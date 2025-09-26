@@ -44,8 +44,9 @@
     "python:test:snapshot": "cd python-tui && ./venv/bin/python -m pytest -m 'snapshot' -v",
     "python:test:safe": "cd python-tui && ./venv/bin/python -m pytest -m 'unit' -v",
     "quality-gate": "pnpm run quality-gate:full",
-    "quality-gate:full": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run lint:md && pnpm run format:check && pnpm run python:lint && pnpm run python:typecheck && pnpm run build",
-    "quality-gate:quick": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run lint:md && pnpm run python:lint && pnpm run python:typecheck",
+    "quality-gate:full": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run lint:md && pnpm run format:check && pnpm run python:lint && pnpm run python:typecheck && pnpm run test && pnpm run python:test:safe && pnpm run build",
+    "quality-gate:quick": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run lint:md && pnpm run python:lint && pnpm run python:typecheck && pnpm run python:test:safe",
+    "quality-gate:safe": "pnpm run check:no-mocks && pnpm run typecheck && pnpm run lint && pnpm run lint:md && pnpm run python:lint && pnpm run python:typecheck && pnpm run python:test:safe",
     "git:status": "node scripts/git-status-helper.js",
     "prepare": "husky"
   },
