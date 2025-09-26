@@ -47,20 +47,31 @@ class OAuthTUI(App):
 
         def signal_handler(signum: int, frame: object) -> None:
             """Handle signals and ensure proper cleanup."""
-            self._cleanup_terminal()
-            sys.exit(0)
+            self._emergency_cleanup()
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
+    def _emergency_cleanup(self) -> None:
+        """Emergency cleanup when app is forcefully terminated."""
+        try:
+            # Force disable mouse tracking
+            sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
+            sys.stdout.flush()
+        except Exception:
+            pass
+        sys.exit(0)
+
     def _cleanup_terminal(self) -> None:
         """Clean up terminal state to prevent control sequence issues."""
         try:
-            # Reset terminal to normal state
-            # This disables mouse reporting and other TUI features
+            # Explicitly disable mouse tracking using ANSI escape sequences
+            # \033[?1003l disables all mouse tracking
+            # \033[?1002l disables cell motion mouse tracking
+            # \033[?1000l disables basic mouse tracking
+            sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
             sys.stdout.flush()
         except Exception:
-            # Ignore cleanup errors
             pass
 
     def on_mount(self) -> None:
@@ -84,6 +95,10 @@ class OAuthTUI(App):
         """Handle unmount event with terminal cleanup."""
         self._cleanup_terminal()
 
+    def on_exit(self) -> None:
+        """Handle app exit and ensure terminal is properly restored."""
+        self._cleanup_terminal()
+
     async def action_quit(self) -> None:
         """Quit the application with proper cleanup."""
         self._cleanup_terminal()
@@ -105,7 +120,12 @@ def main() -> None:
     args = parser.parse_args()
 
     app = OAuthTUI(initial_view=args.view)
-    app.run()
+    try:
+        app.run()
+    finally:
+        # Ensure terminal is always cleaned up
+        sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":

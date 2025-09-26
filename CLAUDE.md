@@ -4,6 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## RULES for Claude Code when working with this repository
 
+### CRITICAL REQUIREMENT: Terminal State Management in Python TUI Applications
+
+**MANDATORY**: All Python Textual TUI applications MUST implement comprehensive terminal cleanup to prevent mouse tracking mode from persisting after crashes or improper exits. This is a SHOWSTOPPER bug that completely breaks the development experience.
+
+**Required Implementation Pattern** (see `python-tui/oauth_tui/app.py` for reference):
+
+1. **Multiple cleanup layers** - Implement ALL of the following:
+   - `on_unmount()` method for normal exits
+   - `on_exit()` method for app exit events
+   - Signal handlers for SIGINT and SIGTERM
+   - `finally` block in `main()` function
+
+2. **Explicit ANSI escape sequences** - Use `\033[?1003l\033[?1002l\033[?1000l` to disable:
+   - All mouse tracking (`?1003l`)
+   - Cell motion mouse tracking (`?1002l`)
+   - Basic mouse tracking (`?1000l`)
+
+3. **Signal handler protection** - Catch SIGINT/SIGTERM and force cleanup before exit
+
+4. **Finally block guarantee** - Wrap `app.run()` in try-finally to ensure cleanup on unhandled exceptions
+
+**Failure to implement this pattern will result in:**
+
+- Terminal left in mouse tracking mode after crashes
+- Every mouse movement generates escape sequences
+- Terminal becomes completely unusable
+- User must manually reset terminal or close session
+
+This is NON-NEGOTIABLE and must be implemented in ANY Textual TUI application.
+
 ### The GOLDEN RULE that governs all other rules: ALWAYS prioritize code quality, security, ZERO mock functionality, TODO:s (except where mock functionality makes sense in test cases etc.) and adherence to best practices above all else
 
 The codebase must be of the highest quality, secure, production ready and free of mock implementations and TODOs. Any code that does not meet these standards must be refactored or removed.
