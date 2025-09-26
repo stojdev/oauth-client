@@ -1,0 +1,82 @@
+Metadata-Version: 2.4
+Name: oauth-tui
+Version: 1.0.0
+Summary: Python Textual TUI for OAuth CLI
+Author-email: OAuth CLI <oauth-cli@example.com>
+License: MIT
+Keywords: oauth,tui,textual,cli
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: User Interfaces
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: textual>=0.47.0
+Requires-Dist: rich>=13.7.0
+Requires-Dist: aiofiles>=23.2.1
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyjwt>=2.8.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.3; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.1; extra == "dev"
+Requires-Dist: black>=23.11.0; extra == "dev"
+Requires-Dist: mypy>=1.7.0; extra == "dev"
+Requires-Dist: ruff>=0.1.6; extra == "dev"
+
+# OAuth TUI - Python Textual Interface
+
+A modern Terminal User Interface for the OAuth CLI, built with Python and Textual.
+
+## Features
+
+- Interactive OAuth authentication flows
+- Token management and inspection
+- Provider configuration
+- JWT token decoding
+- Keyboard-driven navigation
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+From the OAuth CLI:
+```bash
+oauth tui
+```
+
+Or directly:
+```bash
+cd python-tui
+python -m oauth_tui
+```
+
+## Development
+
+Install development dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
+Run tests:
+```bash
+pytest
+```
+
+Format code:
+```bash
+black oauth_tui tests
+```
+
+Type checking:
+```bash
+mypy oauth_tui
+```

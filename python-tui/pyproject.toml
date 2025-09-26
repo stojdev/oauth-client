@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oauth-tui"
+version = "1.0.0"
+description = "Python Textual TUI for OAuth CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "OAuth CLI", email = "oauth-cli@example.com"}
+]
+keywords = ["oauth", "tui", "textual", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: User Interfaces",
+]
+
+dependencies = [
+    "textual>=0.47.0",
+    "rich>=13.7.0",
+    "aiofiles>=23.2.1",
+    "python-dotenv>=1.0.0",
+    "pyjwt>=2.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "black>=23.11.0",
+    "mypy>=1.7.0",
+    "ruff>=0.1.6",
+]
+
+[project.scripts]
+oauth-tui = "oauth_tui.__main__:main"
+
+[tool.setuptools]
+packages = ["oauth_tui", "oauth_tui.screens", "oauth_tui.services", "oauth_tui.widgets", "oauth_tui.utils"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = "textual.*"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "RET", "SIM", "ARG"]
+ignore = [
+    "T201",    # print statements are allowed (used for terminal cleanup)
+    "ARG001",  # unused function arguments (signal handlers)
+    "ARG002",  # unused method arguments (reactive watchers)
+    "SIM105",  # contextlib.suppress - try/except is clearer
+    "SIM102",  # nested ifs are clearer for bounds checking
+    "B904",    # raise from - not needed for simple error wrapping
+]
+
+[tool.pylint.messages_control]
+disable = ["all"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

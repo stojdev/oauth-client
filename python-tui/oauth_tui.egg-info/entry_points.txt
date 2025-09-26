@@ -1,0 +1,2 @@
+[console_scripts]
+oauth-tui = oauth_tui.__main__:main

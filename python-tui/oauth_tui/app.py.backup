@@ -1,0 +1,118 @@
+"""Main Textual application for OAuth TUI."    def __init__(
+        self,
+        driver_class: type[Driver] | None = None,
+        css_path: str | None = None,
+        watch_css: bool = False,
+    ):
+        """Initialize the OAuth TUI application."""
+        super().__init__(driver_class, css_path, watch_css)
+        
+        # Initialize OAuth client
+        self.oauth_client = OAuthClient()
+        
+        # Set title
+        self.title = "OAuth CLI TUI"
+        self.sub_title = "v1.0.0"
+        
+        # Setup signal handlers for proper cleanup
+        self._setup_signal_handlers()
+
+    def _setup_signal_handlers(self) -> None:
+        """Setup signal handlers for graceful shutdown."""
+        def signal_handler(signum, frame):
+            """Handle signals and ensure proper cleanup."""
+            self._cleanup_terminal()
+            sys.exit(0)
+        
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
+    def _cleanup_terminal(self) -> None:
+        """Clean up terminal state to prevent control sequence issues."""
+        try:
+            # Reset terminal to normal state
+            # This disables mouse reporting and other TUI features
+            print("\033[?1000l", end="")  # Disable mouse tracking
+            print("\033[?1002l", end="")  # Disable cell motion mouse tracking
+            print("\033[?1003l", end="")  # Disable all mouse tracking
+            print("\033[?1006l", end="")  # Disable SGR mouse mode
+            print("\033[?1015l", end="")  # Disable urxvt mouse mode
+            print("\033[?25h", end="")    # Show cursor
+            print("\033[c", end="")       # Reset terminal
+            print("\033[0m", end="")      # Reset colors and attributes
+            sys.stdout.flush()
+        except Exception:
+            # Ignore cleanup errors
+            passal
+import sys
+from textual.app import App
+from textual.binding import Binding
+from textual.driver import Driver
+
+from .screens.auth import AuthScreen
+from .screens.config import ConfigScreen
+from .screens.dashboard import DashboardScreen
+from .screens.help import HelpScreen
+from .screens.inspector import InspectorScreen
+from .screens.menu import MenuScreen
+from .screens.tokens import TokensScreen
+from .services.oauth_client import OAuthClient
+
+
+class OAuthTUI(App):
+    """OAuth Terminal User Interface application."""
+
+    CSS = """
+    Screen {
+        background: $background;
+    }
+    """
+
+    BINDINGS = [
+        Binding("ctrl+c", "quit", "Quit", priority=True),
+        ("ctrl+q", "quit", "Quit"),
+        ("?", "help", "Help"),
+    ]
+
+    SCREENS = {
+        "menu": MenuScreen,
+        "tokens": TokensScreen,
+        "dashboard": DashboardScreen,
+        "auth": AuthScreen,
+        "config": ConfigScreen,
+        "inspector": InspectorScreen,
+        "help": HelpScreen,
+    }
+
+    def __init__(
+        self,
+        driver_class: type[Driver] | None = None,
+        css_path: str | None = None,
+        watch_css: bool = False,
+    ):
+        """Initialize the OAuth TUI application."""
+        super().__init__(driver_class, css_path, watch_css)
+        
+        # Initialize OAuth client
+        self.oauth_client = OAuthClient()
+        
+        # Set title
+        self.title = "OAuth CLI TUI"
+        self.sub_title = "v1.0.0"
+
+    def on_mount(self) -> None:
+        """Application startup."""
+        self.push_screen("menu")
+
+    def on_unmount(self) -> None:
+        """Application cleanup on exit."""
+        self._cleanup_terminal()
+
+    def action_help(self) -> None:
+        """Show help information."""
+        self.notify("Help: Use arrow keys to navigate, Enter to select, Esc to go back")
+    
+    def action_quit(self) -> None:
+        """Quit application with proper cleanup."""
+        self._cleanup_terminal()
+        self.exit()

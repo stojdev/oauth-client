@@ -59,19 +59,30 @@ pnpm dev
 # Run tests
 pnpm test
 
-# Lint code
+# Lint code (TypeScript)
 pnpm lint
 pnpm lint:fix
 
-# Format code
+# Lint markdown
+pnpm lint:md
+pnpm lint:md:fix
+
+# Format code (TypeScript)
 pnpm format
 
-# Type check
+# Type check (TypeScript)
 pnpm typecheck
 
+# Python linting and formatting
+pnpm python:lint
+pnpm python:lint:fix
+
+# Python type checking
+pnpm python:typecheck
+
 # Quality gate checks (runs all quality checks)
-pnpm quality-gate        # Full check: typecheck, lint, format, test, build
-pnpm quality-gate:quick  # Quick check: typecheck, lint only
+pnpm quality-gate        # Full check: typecheck, lint, format, python checks, build
+pnpm quality-gate:quick  # Quick check: typecheck, lint only (TS + Python)
 
 # CLI commands (after building)
 node dist/cli/index.js --help
