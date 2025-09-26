@@ -24,9 +24,17 @@ Requires-Dist: pyjwt>=2.8.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.4.3; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.21.1; extra == "dev"
+Requires-Dist: pytest-textual-snapshot>=0.4.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.12.0; extra == "dev"
 Requires-Dist: black>=23.11.0; extra == "dev"
 Requires-Dist: mypy>=1.7.0; extra == "dev"
 Requires-Dist: ruff>=0.1.6; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.4.3; extra == "test"
+Requires-Dist: pytest-asyncio>=0.21.1; extra == "test"
+Requires-Dist: pytest-textual-snapshot>=0.4.0; extra == "test"
+Requires-Dist: pytest-mock>=3.12.0; extra == "test"
+Requires-Dist: coverage>=7.3.0; extra == "test"
 
 # OAuth TUI - Python Textual Interface
 
@@ -49,11 +57,13 @@ pip install -e .
 ## Usage
 
 From the OAuth CLI:
+
 ```bash
 oauth tui
 ```
 
 Or directly:
+
 ```bash
 cd python-tui
 python -m oauth_tui
@@ -62,21 +72,25 @@ python -m oauth_tui
 ## Development
 
 Install development dependencies:
+
 ```bash
 pip install -e ".[dev]"
 ```
 
 Run tests:
+
 ```bash
 pytest
 ```
 
 Format code:
+
 ```bash
 black oauth_tui tests
 ```
 
 Type checking:
+
 ```bash
 mypy oauth_tui
 ```

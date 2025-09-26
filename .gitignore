@@ -62,3 +62,5 @@ tests/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+python-tui/.pytest_cache/
+**/.pytest_cache/

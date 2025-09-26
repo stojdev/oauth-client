@@ -7,6 +7,15 @@ pyjwt>=2.8.0
 [dev]
 pytest>=7.4.3
 pytest-asyncio>=0.21.1
+pytest-textual-snapshot>=0.4.0
+pytest-mock>=3.12.0
 black>=23.11.0
 mypy>=1.7.0
 ruff>=0.1.6
+
+[test]
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-textual-snapshot>=0.4.0
+pytest-mock>=3.12.0
+coverage>=7.3.0

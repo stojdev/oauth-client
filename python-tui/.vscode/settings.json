@@ -1,0 +1,10 @@
+{
+  "python.defaultInterpreterPath": "./venv/bin/python",
+  "python.linting.enabled": false,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.extraPaths": ["./oauth_tui"],
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.stubPath": "./venv/lib/python3.13/site-packages",
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.useLibraryCodeForTypes": true
+}

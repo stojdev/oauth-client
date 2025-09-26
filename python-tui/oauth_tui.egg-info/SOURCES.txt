@@ -10,6 +10,11 @@ oauth_tui.egg-info/entry_points.txt
 oauth_tui.egg-info/requires.txt
 oauth_tui.egg-info/top_level.txt
 oauth_tui/screens/__init__.py
+oauth_tui/screens/auth.py
+oauth_tui/screens/config.py
+oauth_tui/screens/dashboard.py
+oauth_tui/screens/help.py
+oauth_tui/screens/inspector.py
 oauth_tui/screens/menu.py
 oauth_tui/screens/tokens.py
 oauth_tui/services/__init__.py
@@ -17,3 +22,7 @@ oauth_tui/services/cli_bridge.py
 oauth_tui/services/oauth_client.py
 oauth_tui/utils/__init__.py
 oauth_tui/widgets/__init__.py
+tests/test_app.py
+tests/test_integration.py
+tests/test_services.py
+tests/test_snapshots.py
