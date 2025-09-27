@@ -34,16 +34,43 @@ export async function authCommand(
 
     let config: OAuthConfig;
 
-    // Try to load from configuration file first
-    if (options.config) {
-      await configLoader.load({ configFile: options.config });
+    // Try to load provider from config file (explicit or default paths)
+    try {
+      await configLoader.load({ configFile: options.config, skipValidation: true });
       const providerConfig = configLoader.getProvider(provider);
-      if (!providerConfig) {
-        throw new Error(`Provider '${provider}' not found in configuration`);
+      if (providerConfig) {
+        config = providerConfig as OAuthConfig;
+        logger.debug(`Loaded provider '${provider}' from configuration file`);
+      } else {
+        // Provider not found in config, try presets
+        const preset = providerManager.getPreset(provider);
+        if (preset) {
+          if (!options.clientId) {
+            throw new Error(`Client ID required for provider '${provider}'`);
+          }
+          config = providerManager.createFromPreset(provider, {
+            clientId: options.clientId,
+            clientSecret: options.clientSecret,
+            redirectUri: 'http://localhost:8080/callback',
+          }) as OAuthConfig;
+          logger.debug(`Created configuration from preset for provider '${provider}'`);
+        } else {
+          // Manual configuration
+          if (!options.clientId) {
+            throw new Error('Client ID is required');
+          }
+          config = {
+            clientId: options.clientId,
+            clientSecret: options.clientSecret,
+            tokenUrl: '', // Will be set based on grant type
+            authorizationUrl: '',
+            scope: options.scope,
+          } as OAuthConfig;
+          logger.debug(`Using manual configuration for provider '${provider}'`);
+        }
       }
-      config = providerConfig as OAuthConfig;
-    } else {
-      // Try to use provider presets
+    } catch (error) {
+      // If config loading fails, try presets as fallback
       const preset = providerManager.getPreset(provider);
       if (preset) {
         if (!options.clientId) {
@@ -54,18 +81,9 @@ export async function authCommand(
           clientSecret: options.clientSecret,
           redirectUri: 'http://localhost:8080/callback',
         }) as OAuthConfig;
+        logger.debug(`Created configuration from preset for provider '${provider}'`);
       } else {
-        // Manual configuration
-        if (!options.clientId) {
-          throw new Error('Client ID is required');
-        }
-        config = {
-          clientId: options.clientId,
-          clientSecret: options.clientSecret,
-          tokenUrl: '', // Will be set based on grant type
-          authorizationUrl: '',
-          scope: options.scope,
-        } as OAuthConfig;
+        throw error;
       }
     }
 
