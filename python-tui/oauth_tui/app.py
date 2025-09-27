@@ -1,5 +1,6 @@
 """Main OAuth TUI application."""
 
+import atexit
 import signal
 import sys
 
@@ -14,6 +15,28 @@ from .screens.inspector import InspectorScreen
 from .screens.menu import MenuScreen
 from .screens.tokens import TokensScreen
 from .services.oauth_client import OAuthClient
+
+
+def _cleanup_terminal() -> None:
+    """Clean up terminal state to prevent control sequence issues."""
+    try:
+        sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
+        sys.stdout.flush()
+    except Exception:
+        pass
+
+
+atexit.register(_cleanup_terminal)
+
+
+def _signal_handler(signum: int, frame) -> None:
+    """Handle signals with terminal cleanup."""
+    _cleanup_terminal()
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, _signal_handler)
+signal.signal(signal.SIGTERM, _signal_handler)
 
 
 class OAuthTUI(App):
@@ -39,41 +62,6 @@ class OAuthTUI(App):
         self.initial_view = initial_view
         self.oauth_client = OAuthClient()
 
-        # Setup signal handlers for proper cleanup
-        self._setup_signal_handlers()
-
-    def _setup_signal_handlers(self) -> None:
-        """Setup signal handlers for graceful shutdown."""
-
-        def signal_handler(signum: int, frame: object) -> None:
-            """Handle signals and ensure proper cleanup."""
-            self._emergency_cleanup()
-
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-
-    def _emergency_cleanup(self) -> None:
-        """Emergency cleanup when app is forcefully terminated."""
-        try:
-            # Force disable mouse tracking
-            sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
-            sys.stdout.flush()
-        except Exception:
-            pass
-        sys.exit(0)
-
-    def _cleanup_terminal(self) -> None:
-        """Clean up terminal state to prevent control sequence issues."""
-        try:
-            # Explicitly disable mouse tracking using ANSI escape sequences
-            # \033[?1003l disables all mouse tracking
-            # \033[?1002l disables cell motion mouse tracking
-            # \033[?1000l disables basic mouse tracking
-            sys.stdout.write("\033[?1003l\033[?1002l\033[?1000l")
-            sys.stdout.flush()
-        except Exception:
-            pass
-
     def on_mount(self) -> None:
         """Handle mount event."""
         # Install screens
@@ -93,16 +81,11 @@ class OAuthTUI(App):
 
     def on_unmount(self) -> None:
         """Handle unmount event with terminal cleanup."""
-        self._cleanup_terminal()
+        _cleanup_terminal()
 
     def on_exit(self) -> None:
         """Handle app exit and ensure terminal is properly restored."""
-        self._cleanup_terminal()
-
-    async def action_quit(self) -> None:
-        """Quit the application with proper cleanup."""
-        self._cleanup_terminal()
-        self.exit()
+        _cleanup_terminal()
 
 
 def main() -> None:

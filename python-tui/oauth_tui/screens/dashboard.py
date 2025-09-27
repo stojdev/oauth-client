@@ -245,15 +245,14 @@ class DashboardScreen(Screen):
 
     def create_recent_tokens_panel(self) -> Container:
         """Create the recent tokens panel."""
-        container = Container(classes="content-container")
-
-        # Add table for recent tokens
         table: DataTable = DataTable(id="recent-tokens-table")
         table.cursor_type = "row"
         table.zebra_stripes = True
-        container.mount(table)
 
-        return container
+        return Container(
+            table,
+            classes="content-container",
+        )
 
     def create_system_info_panel(self) -> Container:
         """Create the system information panel."""

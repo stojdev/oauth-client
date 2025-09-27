@@ -1,6 +1,7 @@
 """Main menu screen for OAuth TUI."""
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
@@ -14,6 +15,8 @@ class MenuScreen(Screen):
         ("a", "authenticate", "Auth"),
         ("c", "configure", "Config"),
         ("q", "quit_app", "Quit"),
+        Binding("up", "focus_previous", "Focus Previous", show=False),
+        Binding("down", "focus_next", "Focus Next", show=False),
     ]
 
     CSS = """
@@ -46,6 +49,10 @@ class MenuScreen(Screen):
         width: 100%;
         margin-bottom: 1;
     }
+
+    Button:focus {
+        border: heavy $accent;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -66,6 +73,10 @@ class MenuScreen(Screen):
                 yield Button("❌ Exit", id="exit", variant="error")
 
         yield Footer()
+
+    def on_mount(self) -> None:
+        """Set focus when screen mounts."""
+        self.set_focus(self.query_one("#dashboard", Button))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
