@@ -164,19 +164,19 @@ export async function authCommand(
       logger.info(JSON.stringify(token, null, 2));
     } else {
       logger.info(chalk.green('✓ Successfully obtained access token!'));
-      logger.info(chalk.gray('Token Type:'), token.token_type);
-      logger.info(chalk.gray('Access Token:'), token.access_token.substring(0, 40) + '...');
+      logger.info(`${chalk.gray('Token Type:')} ${token.token_type}`);
+      logger.info(`${chalk.gray('Access Token:')} ${token.access_token.substring(0, 40)}...`);
 
       if (token.expires_in) {
-        logger.info(chalk.gray('Expires In:'), token.expires_in, 'seconds');
+        logger.info(`${chalk.gray('Expires In:')} ${token.expires_in} seconds`);
       }
 
       if (token.scope) {
-        logger.info(chalk.gray('Scope:'), token.scope);
+        logger.info(`${chalk.gray('Scope:')} ${token.scope}`);
       }
 
       if (token.refresh_token) {
-        logger.info(chalk.gray('Refresh Token:'), token.refresh_token.substring(0, 40) + '...');
+        logger.info(`${chalk.gray('Refresh Token:')} ${token.refresh_token.substring(0, 40)}...`);
       }
 
       // Offer to copy token to clipboard
@@ -194,6 +194,9 @@ export async function authCommand(
       await tokenManager.storeToken(provider, token);
       logger.info(chalk.green(`✓ Token saved for provider '${provider}'`));
     }
+
+    // Exit successfully
+    process.exit(0);
   } catch (error) {
     logger.error('Authentication failed', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
