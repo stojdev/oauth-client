@@ -23,10 +23,27 @@ export async function refreshCommand(
 
     // Check if it's a provider name
     const storedToken = await tokenManager.getToken(tokenOrProvider || '');
-    if (storedToken && storedToken.refresh_token) {
+    if (storedToken) {
+      // Check if this is a client_credentials token (which doesn't have refresh tokens)
+      if (!storedToken.refresh_token) {
+        throw new Error(
+          `Cannot refresh token for '${tokenOrProvider}': Client credentials tokens do not have refresh tokens. ` +
+            'Client credentials tokens are short-lived and should be re-requested using the original credentials when expired.',
+        );
+      }
+
       refreshToken = storedToken.refresh_token;
       provider = tokenOrProvider;
       logger.info(chalk.blue(`Refreshing token for provider: ${provider}`));
+    }
+
+    // Check if the first argument looks like a grant type instead of a token
+    if (tokenOrProvider === 'client-credentials' || tokenOrProvider === 'client_credentials') {
+      throw new Error(
+        'Cannot refresh client_credentials tokens: Client credentials tokens do not have refresh tokens. ' +
+          'Client credentials tokens are short-lived and should be re-requested using: ' +
+          `oauth token client-credentials --client-id <id> --client-secret <secret> --token-url <url>`,
+      );
     }
 
     if (!refreshToken) {
@@ -58,8 +75,7 @@ export async function refreshCommand(
       throw new Error('Client ID and token URL are required');
     }
 
-    logger.info(chalk.blue('Refreshing access token...'));
-
+    // Note: The RefreshTokenGrant and OAuthClient will handle the logging
     const client = new RefreshTokenGrant({
       clientId,
       clientSecret,
@@ -97,8 +113,23 @@ export async function refreshCommand(
       logger.info(chalk.green(`✓ Updated token saved for '${provider}'`));
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Failed to refresh token:'), errorMessage);
+    let errorMessage = 'Unknown error';
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      // Handle OAuth error responses
+      const oauthError = error as { error?: string; error_description?: string };
+      if (oauthError.error) {
+        errorMessage = `${oauthError.error}${oauthError.error_description ? `: ${oauthError.error_description}` : ''}`;
+      } else {
+        errorMessage = JSON.stringify(error);
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+
+    logger.error(chalk.red(`✗ Failed to refresh token: ${errorMessage}`));
     process.exit(1);
   }
 }

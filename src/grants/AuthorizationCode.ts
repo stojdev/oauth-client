@@ -136,7 +136,7 @@ export class AuthorizationCodeGrant extends OAuthClient {
       // Build authorization URL
       const authUrl = this.buildAuthorizationUrl();
 
-      logger.info('Starting authorization code flow', {
+      logger.debug('Starting authorization code flow', {
         clientId: this.config.clientId,
         redirectUri: this.config.redirectUri,
       });

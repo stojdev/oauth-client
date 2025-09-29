@@ -56,10 +56,16 @@ class CorrelationManager {
 /**
  * Sanitize sensitive data from logs
  */
-const sanitizeData = (data: unknown): unknown => {
+const sanitizeData = (data: unknown, seen = new WeakSet()): unknown => {
   if (typeof data !== 'object' || data === null) {
     return data;
   }
+
+  if (seen.has(data as object)) {
+    return '[Circular]';
+  }
+
+  seen.add(data as object);
 
   const sensitiveKeys = [
     'password',
@@ -67,7 +73,6 @@ const sanitizeData = (data: unknown): unknown => {
     'access_token',
     'refresh_token',
     'id_token',
-    'token',
     'authorization',
     'api_key',
     'private_key',
@@ -76,8 +81,10 @@ const sanitizeData = (data: unknown): unknown => {
     'cookie',
   ];
 
+  const exactMatchKeys = ['token'];
+
   if (Array.isArray(data)) {
-    return data.map((item) => sanitizeData(item));
+    return data.map((item) => sanitizeData(item, seen));
   }
 
   const sanitized: Record<string, unknown> = { ...(data as Record<string, unknown>) };
@@ -85,19 +92,20 @@ const sanitizeData = (data: unknown): unknown => {
   for (const key in sanitized) {
     const lowerKey = key.toLowerCase();
 
-    // Check if this key contains sensitive data
-    if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
+    const shouldRedact =
+      sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive)) ||
+      exactMatchKeys.includes(lowerKey);
+
+    if (shouldRedact) {
       const value = sanitized[key];
       if (typeof value === 'string' && value.length > 0) {
-        // Keep first 4 chars for debugging, mask the rest
         sanitized[key] =
           value.length > 8
             ? `${value.substring(0, 4)}...${value.substring(value.length - 4)}`
             : '***REDACTED***';
       }
     } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-      // Recursively sanitize nested objects
-      sanitized[key] = sanitizeData(sanitized[key]);
+      sanitized[key] = sanitizeData(sanitized[key], seen);
     }
   }
 
@@ -108,6 +116,10 @@ const sanitizeData = (data: unknown): unknown => {
  * Custom format for console output
  */
 const consoleFormat = printf(({ level, message, timestamp, correlationId, ...metadata }) => {
+  if (!message || (typeof message === 'string' && message.trim() === '')) {
+    return '';
+  }
+
   let output = `${chalk.gray(timestamp)}`;
 
   if (correlationId) {
@@ -116,11 +128,21 @@ const consoleFormat = printf(({ level, message, timestamp, correlationId, ...met
 
   output += ` ${level}: ${message}`;
 
-  // Add metadata if present
+  // Add metadata if present and not empty
   if (metadata && Object.keys(metadata).length > 0) {
     const sanitized = sanitizeData(metadata);
     if (typeof sanitized === 'object' && sanitized !== null && Object.keys(sanitized).length > 0) {
-      output += ` ${chalk.gray(JSON.stringify(sanitized, null, 2))}`;
+      // Check if metadata object only contains empty nested objects
+      const hasActualContent = Object.values(sanitized).some((value) => {
+        if (typeof value === 'object' && value !== null) {
+          return Object.keys(value).length > 0;
+        }
+        return value !== undefined && value !== null;
+      });
+
+      if (hasActualContent) {
+        output += ` ${chalk.gray(JSON.stringify(sanitized, null, 2))}`;
+      }
     }
   }
 
@@ -331,7 +353,7 @@ export class PerformanceLogger {
     const duration = Date.now() - startTime;
     this.timers.delete(operation);
 
-    logger.info(`Performance: ${operation} completed in ${duration}ms`, {
+    logger.debug(`Performance: ${operation} completed in ${duration}ms`, {
       operation,
       duration,
       ...details,

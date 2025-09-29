@@ -119,15 +119,41 @@ export class ErrorHandler {
     }
 
     if (error && typeof error === 'object' && 'code' in error) {
-      const networkError = error as { code?: string; config?: { url?: string } };
+      const networkError = error as { code?: string; message?: string; config?: { url?: string } };
+
       if (networkError.code === 'ECONNREFUSED') {
-        logger.error('Connection refused', { url: networkError.config?.url });
-        throw new OAuthClientError('Unable to connect to authorization server');
+        logger.debug('Connection refused', { url: networkError.config?.url });
+        throw new OAuthClientError(
+          'Unable to connect to authorization server. Please check the URL and ensure the server is reachable.',
+        );
       }
 
       if (networkError.code === 'ETIMEDOUT') {
-        logger.error('Request timeout', { url: networkError.config?.url });
-        throw new OAuthClientError('Request to authorization server timed out');
+        logger.debug('Request timeout', { url: networkError.config?.url });
+        throw new OAuthClientError(
+          'Request to authorization server timed out. The server may be slow or unreachable.',
+        );
+      }
+
+      if (networkError.code === 'ENOTFOUND') {
+        logger.debug('Host not found', { url: networkError.config?.url });
+        throw new OAuthClientError('Unable to resolve hostname. Please check the URL is correct.');
+      }
+
+      if (
+        networkError.code === 'EPROTO' ||
+        networkError.message?.includes('SSL') ||
+        networkError.message?.includes('TLS')
+      ) {
+        logger.debug('SSL/TLS error', { url: networkError.config?.url });
+        throw new OAuthClientError(
+          'SSL/TLS handshake failed. The server may have an invalid certificate or does not support secure connections.',
+        );
+      }
+
+      if (networkError.code === 'ERR_INVALID_URL') {
+        logger.debug('Invalid URL', { url: networkError.config?.url });
+        throw new OAuthClientError('The provided URL is invalid. Please check the format.');
       }
     }
 

@@ -32,6 +32,11 @@ export async function testCommand(
   const startTime = Date.now();
   const results: TestResult[] = [];
 
+  // Set log level to debug in verbose mode
+  if (options.verbose) {
+    logger.level = 'debug';
+  }
+
   try {
     logger.info(chalk.blue(`🧪 Testing OAuth Provider: ${provider}`));
     logger.info(chalk.gray('═'.repeat(50)));
@@ -40,18 +45,31 @@ export async function testCommand(
     // Load configuration
     let providerConfig: ProviderConfig;
 
-    if (options.config) {
+    // Try loading from config file first (explicit or default)
+    try {
       const loader = new ConfigLoader();
-      const config = await loader.load({ configFile: options.config });
+      const config = await loader.load({ configFile: options.config, skipValidation: true });
       const foundProvider = config.providers.find((p) => p.id === provider);
 
-      if (!foundProvider) {
-        throw new Error(`Provider '${provider}' not found in configuration`);
+      if (foundProvider) {
+        providerConfig = foundProvider;
+        // Override with CLI options if provided
+        if (options.clientId) {
+          providerConfig.clientId = options.clientId;
+        }
+        if (options.clientSecret) {
+          providerConfig.clientSecret = options.clientSecret;
+        }
+      } else {
+        // Provider not in config, try preset
+        const manager = new ProviderConfigManager();
+        providerConfig = manager.createFromPreset(provider, {
+          clientId: options.clientId || process.env.OAUTH_CLIENT_ID || '',
+          clientSecret: options.clientSecret || process.env.OAUTH_CLIENT_SECRET,
+        });
       }
-
-      providerConfig = foundProvider;
-    } else {
-      // Use preset with provided credentials
+    } catch {
+      // Config loading failed, try preset
       const manager = new ProviderConfigManager();
       providerConfig = manager.createFromPreset(provider, {
         clientId: options.clientId || process.env.OAUTH_CLIENT_ID || '',
@@ -130,13 +148,14 @@ export async function testCommand(
     }
     logger.info(chalk.gray(`  ⏱️  Total Duration: ${Date.now() - startTime}ms`));
 
-    // Exit with error if any tests failed
+    // Exit with appropriate code
     if (failedCount > 0) {
       process.exit(1);
     }
+    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Test execution failed:'), errorMessage);
+    logger.error(chalk.red(`✗ Test execution failed: ${errorMessage}`));
     process.exit(1);
   }
 }
@@ -154,6 +173,14 @@ async function testGrantType(
   const startTime = Date.now();
 
   logger.info(chalk.blue(`Testing ${grantType}...`));
+
+  if (verbose) {
+    logger.info(chalk.gray(`  Grant Type: ${grantType}`));
+    logger.info(chalk.gray(`  Token URL: ${config.tokenUrl}`));
+    if (config.clientId) {
+      logger.info(chalk.gray(`  Client ID: ${config.clientId.substring(0, 20)}...`));
+    }
+  }
 
   try {
     // Check if grant type is supported
@@ -241,8 +268,26 @@ async function testGrantType(
         });
         return;
 
-      default:
-        throw new Error(`Unsupported grant type: ${grantType}`);
+      default: {
+        const validGrantTypes = [
+          'client_credentials',
+          'password',
+          'authorization_code',
+          'refresh_token',
+          'implicit',
+          'urn:ietf:params:oauth:grant-type:device_code',
+        ];
+        logger.info(chalk.red(`  ✗ Unsupported grant type: ${grantType}`));
+        logger.info(chalk.gray(`  Valid grant types: ${validGrantTypes.join(', ')}`));
+        results.push({
+          grantType,
+          status: 'failed',
+          message: `Unsupported grant type. Valid types: ${validGrantTypes.join(', ')}`,
+          duration: Date.now() - startTime,
+        });
+        logger.info('');
+        return;
+      }
     }
 
     // Validate token
@@ -251,6 +296,20 @@ async function testGrantType(
     }
 
     logger.info(chalk.green(`  ✓ Token obtained successfully`));
+
+    // Show token details in verbose mode
+    if (verbose) {
+      const tokenData = token as Record<string, unknown>;
+      logger.info(
+        chalk.gray(`  Access Token: ${(tokenData.access_token as string).substring(0, 50)}...`),
+      );
+      if (tokenData.token_type) {
+        logger.info(chalk.gray(`  Token Type: ${tokenData.token_type}`));
+      }
+      if (tokenData.expires_in) {
+        logger.info(chalk.gray(`  Expires In: ${tokenData.expires_in} seconds`));
+      }
+    }
 
     // Decode and validate JWT if possible
     try {
@@ -274,14 +333,18 @@ async function testGrantType(
       } else if (verificationResult.valid && verificationResult.payload) {
         logger.info(chalk.gray(`  Token type: JWT (Verified)`));
         logger.info(chalk.green(`  ✓ Signature verified`));
-        logger.info(chalk.gray(`  Issuer: ${verificationResult.payload.iss || 'N/A'}`));
-        logger.info(chalk.gray(`  Subject: ${verificationResult.payload.sub || 'N/A'}`));
-        logger.info(chalk.gray(`  Algorithm: ${verificationResult.header?.alg || 'N/A'}`));
+        if (verbose) {
+          logger.info(chalk.gray(`  Issuer: ${verificationResult.payload.iss || 'N/A'}`));
+          logger.info(chalk.gray(`  Subject: ${verificationResult.payload.sub || 'N/A'}`));
+          logger.info(chalk.gray(`  Algorithm: ${verificationResult.header?.alg || 'N/A'}`));
+        }
 
         if (verificationResult.payload.exp) {
           const expiresIn = verificationResult.payload.exp - Math.floor(Date.now() / 1000);
           if (expiresIn > 0) {
-            logger.info(chalk.gray(`  Expires in: ${expiresIn}s`));
+            if (verbose) {
+              logger.info(chalk.gray(`  Expires in: ${expiresIn}s`));
+            }
           } else {
             logger.info(chalk.yellow(`  ⚠ Token is already expired`));
           }
@@ -297,7 +360,7 @@ async function testGrantType(
         const decoded = JWTDecoder.decode(
           (token as Record<string, unknown>).access_token as string,
         );
-        if (decoded) {
+        if (decoded && verbose) {
           logger.info(chalk.gray(`  Issuer: ${decoded.payload.iss || 'N/A'}`));
           logger.info(chalk.gray(`  Subject: ${decoded.payload.sub || 'N/A'}`));
           logger.info(chalk.gray(`  Algorithm: ${decoded.header.alg || 'N/A'}`));
@@ -320,6 +383,10 @@ async function testGrantType(
 
     if ((token as Record<string, unknown>).refresh_token) {
       logger.info(chalk.gray(`  ✓ Refresh token received`));
+      if (verbose) {
+        const refreshToken = (token as Record<string, unknown>).refresh_token as string;
+        logger.info(chalk.gray(`  Refresh Token: ${refreshToken.substring(0, 50)}...`));
+      }
     }
 
     if ((token as Record<string, unknown>).scope) {
@@ -330,7 +397,6 @@ async function testGrantType(
       grantType,
       status: 'success',
       message: 'Token obtained successfully',
-      token: verbose ? ((token as Record<string, unknown>).access_token as string) : undefined,
       duration: Date.now() - startTime,
     });
   } catch (error) {
@@ -339,7 +405,7 @@ async function testGrantType(
     logger.info(chalk.red(`  ✗ Test failed: ${errorMessage}`));
 
     if (verbose) {
-      logger.error('Test error details', error);
+      logger.debug('Test error details', error);
     }
 
     results.push({

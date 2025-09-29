@@ -217,9 +217,8 @@ export async function tokenCommand(
     // Ensure process exits cleanly
     process.exit(0);
   } catch (error) {
-    logger.error('Token request failed', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Token request failed:'), errorMessage);
+    logger.error(`${chalk.red('✗ Token request failed:')} ${errorMessage}`);
     process.exit(1);
   }
 }

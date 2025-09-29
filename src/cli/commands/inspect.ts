@@ -49,7 +49,7 @@ export async function inspectCommand(
     if (!isJWTFormat) {
       logger.info(chalk.gray('Token appears to be opaque (not JWT format)'));
       logger.info(chalk.gray(`Token: ${tokenToInspect.substring(0, 50)}...`));
-      return;
+      process.exit(0);
     }
 
     // Try to get some verification info (without requiring keys)
@@ -61,7 +61,7 @@ export async function inspectCommand(
 
       if (verifyResult.isOpaque) {
         logger.info(chalk.gray('Token is opaque (not JWT)'));
-        return;
+        process.exit(0);
       } else if (verifyResult.valid) {
         logger.info(chalk.green('✓ Token signature verified (if key was available)'));
       } else {
@@ -110,7 +110,7 @@ export async function inspectCommand(
     process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(chalk.red('✗ Failed to inspect token:'), errorMessage);
+    logger.error(chalk.red(`✗ Failed to inspect token: ${errorMessage}`));
     process.exit(1);
   }
 }

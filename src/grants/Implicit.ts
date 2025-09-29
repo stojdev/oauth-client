@@ -198,7 +198,7 @@ export class ImplicitGrant extends OAuthClient {
       // Build authorization URL
       const authUrl = this.buildAuthorizationUrl();
 
-      logger.info('Starting implicit flow (DEPRECATED)...');
+      logger.debug('Starting implicit flow (DEPRECATED)...');
       logger.debug(`Authorization URL: ${authUrl}`);
 
       // Set up callback server

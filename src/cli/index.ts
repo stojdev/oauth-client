@@ -155,7 +155,8 @@ program
   .command('tokens:list')
   .alias('list-tokens')
   .description('List all stored tokens')
-  .action(async () => {
+  .option('-o, --output <format>', 'Output format (json|text)', 'text')
+  .action(async (options: { output?: 'json' | 'text' }) => {
     const providers = await tokenManager.listProviders();
 
     if (providers.length === 0) {
@@ -163,11 +164,75 @@ program
       process.exit(0);
     }
 
-    logger.info(chalk.blue('Stored tokens:'));
+    if (options.output === 'json') {
+      const tokens = [];
+      for (const provider of providers) {
+        const token = await tokenManager.getToken(provider);
+        if (token) {
+          tokens.push({ provider, token });
+        }
+      }
+      logger.info(JSON.stringify(tokens, null, 2));
+      process.exit(0);
+    }
+
+    logger.info(chalk.blue(`Stored tokens (${providers.length}):`));
+    logger.info('');
+
     for (const provider of providers) {
       const token = await tokenManager.getToken(provider);
       if (token) {
-        logger.info(chalk.gray(`- ${provider}: ${token.access_token.substring(0, 20)}...`));
+        logger.info(chalk.bold.cyan(`Provider: ${provider}`));
+        logger.info(`  ${chalk.gray('Token Type:')} ${token.token_type}`);
+        logger.info(`  ${chalk.gray('Access Token:')} ${token.access_token.substring(0, 40)}...`);
+
+        if (token.expires_in !== undefined) {
+          const now = Date.now();
+          const createdAt = (token as { createdAt?: number }).createdAt || now;
+          const expiresAt = createdAt + token.expires_in * 1000;
+          const expiresIn = Math.floor((expiresAt - now) / 1000);
+
+          if (expiresIn <= 0) {
+            logger.info(`  ${chalk.gray('Status:')} ${chalk.red('EXPIRED')}`);
+            logger.info(`  ${chalk.gray('Expired:')} ${Math.abs(expiresIn)} seconds ago`);
+          } else {
+            const hours = Math.floor(expiresIn / 3600);
+            const minutes = Math.floor((expiresIn % 3600) / 60);
+            const seconds = expiresIn % 60;
+
+            if (hours > 0) {
+              logger.info(`  ${chalk.gray('Status:')} ${chalk.green('VALID')}`);
+              logger.info(
+                `  ${chalk.gray('Expires In:')} ${hours}h ${minutes}m ${seconds}s (${expiresIn} seconds)`,
+              );
+            } else if (minutes > 0) {
+              logger.info(`  ${chalk.gray('Status:')} ${chalk.green('VALID')}`);
+              logger.info(
+                `  ${chalk.gray('Expires In:')} ${minutes}m ${seconds}s (${expiresIn} seconds)`,
+              );
+            } else {
+              logger.info(`  ${chalk.gray('Status:')} ${chalk.yellow('EXPIRING SOON')}`);
+              logger.info(`  ${chalk.gray('Expires In:')} ${expiresIn} seconds`);
+            }
+          }
+        }
+
+        if (token.scope) {
+          logger.info(`  ${chalk.gray('Scope:')} ${token.scope}`);
+        }
+
+        if (token.refresh_token) {
+          logger.info(
+            `  ${chalk.gray('Refresh Token:')} ${token.refresh_token.substring(0, 40)}...`,
+          );
+        }
+
+        if ((token as { createdAt?: number }).createdAt) {
+          const createdDate = new Date((token as { createdAt: number }).createdAt);
+          logger.info(`  ${chalk.gray('Created:')} ${createdDate.toISOString()}`);
+        }
+
+        logger.info('');
       }
     }
     process.exit(0);

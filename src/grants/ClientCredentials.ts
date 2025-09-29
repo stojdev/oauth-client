@@ -34,7 +34,7 @@ export class ClientCredentialsGrant extends OAuthClient {
     return ErrorHandler.wrap(async () => {
       PerformanceLogger.start('client_credentials_token_request');
 
-      logger.info('Starting Client Credentials grant flow', {
+      logger.debug('Starting Client Credentials grant flow', {
         clientId: this.config.clientId,
         scope: this.config.scope,
       });
@@ -63,7 +63,7 @@ export class ClientCredentialsGrant extends OAuthClient {
           success: true,
         });
 
-        logger.info('Client Credentials grant completed successfully');
+        logger.debug('Client Credentials grant completed successfully');
         return tokenResponse;
       } catch (error) {
         AuditLogger.logAuth('CLIENT_CREDENTIALS_FAILURE', {
@@ -76,7 +76,10 @@ export class ClientCredentialsGrant extends OAuthClient {
           success: false,
         });
 
-        logger.error('Client Credentials grant failed', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logger.debug(`Client Credentials grant failed ${errorMessage}`, {
+          code: (error as { code?: string }).code,
+        });
         throw error;
       }
     });

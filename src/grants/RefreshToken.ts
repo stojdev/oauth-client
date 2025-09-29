@@ -2,7 +2,6 @@ import { OAuthClient } from '../core/OAuthClient.js';
 import { ErrorHandler } from '../core/ErrorHandler.js';
 import { GrantType } from '../types/index.js';
 import type { OAuthConfig, TokenResponse } from '../types/index.js';
-import { logger } from '../utils/Logger.js';
 
 export interface RefreshTokenConfig extends OAuthConfig {
   refreshToken: string;
@@ -32,7 +31,7 @@ export class RefreshTokenGrant extends OAuthClient {
    */
   async getAccessToken(): Promise<TokenResponse> {
     return ErrorHandler.wrap(async () => {
-      logger.info('Refreshing access token...');
+      // The base OAuthClient.refreshToken method handles logging
       return this.refreshToken(this.config.refreshToken);
     });
   }

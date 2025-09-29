@@ -8,6 +8,7 @@ import {
 } from '../utils/Logger.js';
 import { validateOAuthConfig, validateTokenResponse } from '../utils/Validators.js';
 import { ClientAuth, ClientAuthMethod } from '../utils/ClientAuth.js';
+import { UrlValidator } from '../utils/UrlValidator.js';
 import { OAuthClientError } from './ErrorHandler.js';
 import { GrantType } from '../types/index.js';
 import type { OAuthConfig, TokenResponse, OAuthError } from '../types/index.js';
@@ -94,8 +95,7 @@ export abstract class OAuthClient {
           return Promise.reject(oauthError);
         }
 
-        logger.error('OAuth network error', {
-          message: error.message,
+        logger.debug(`OAuth network error ${error.message}`, {
           correlationId: CorrelationManager.getId(),
         });
 
@@ -115,6 +115,8 @@ export abstract class OAuthClient {
   protected async exchangeToken(params: URLSearchParams): Promise<TokenResponse> {
     PerformanceLogger.start('token_exchange');
     const grantType = params.get('grant_type') || 'unknown';
+
+    UrlValidator.validate(this.config.tokenUrl, 'Token URL');
 
     try {
       let config: AxiosRequestConfig = {
@@ -173,10 +175,16 @@ export abstract class OAuthClient {
         success: false,
       });
 
-      logger.error('Token exchange failed', {
+      logger.debug('Token exchange failed', {
         grantType,
         clientId: this.config.clientId,
-        error,
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                code: (error as { code?: string }).code,
+              }
+            : 'Unknown error',
       });
 
       throw error;

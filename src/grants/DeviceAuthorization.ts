@@ -115,7 +115,7 @@ export class DeviceAuthorizationGrant extends OAuthClient {
    */
   async getAccessToken(): Promise<TokenResponse> {
     return ErrorHandler.wrap(async () => {
-      logger.info('Starting device authorization flow...');
+      logger.debug('Starting device authorization flow...');
 
       // Request device code
       const deviceResponse = await this.requestDeviceCode();
